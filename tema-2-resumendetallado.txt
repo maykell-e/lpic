@@ -281,11 +281,233 @@ Tema 102: INstalacaión de Linux y gestión de paquetes
 					
 			[ Interactuando con GRUB 2 ] pag 76
 				
+				
+{ 102.3 Gestión de librerías compartidas }
+
+	Áreas de conocimiento clave
+		• Identificar librerías compartidas.
+		• Identificar las ubicaciones típicas de las librerías del sistema.
+		• Cargar librerías compartidas.
+	
+	Lista parcial de archivos, términos y utilidades
+		• ldd
+		• ldconfig
+		• /etc/ld.so.conf
+		• LD_LIBRARY_PATH
 					
+					
+	Bibliotecas compartidas (shared libreries) o objectos compartidos (shared objects) que són partes de código compilado y reutilizable, que varias programas
+	utilizan de manera recurrente.
+	
+	Las bibliotecas de SW son colecciones de código que están destinadas a ser utilizadas por muchos programas diferentes.
+	Para esto hay 2 pasos importantes:
+		1- El compilador convierte el código fuente en código de maquina que se almacena en los llamados object files
+		2- el linker combina los archivos de objetos y los vincula a las bibliotecas para generar el archivo ejecutable final.
+		
+	Este enlace se puede hacerse statically o dynamically. Dependiendo del método que utilicemos, hablaremos de bibliotecas estáticas o vinculación dinámica.
+	
+	Bibliotecas estáticas:
+		Esta biblioteca estática se fusiona con el programa en el momento del enlace, una parte del código de la biblioteca se incrusta en el programa y se
+		convierte en parte de él. Por lo tanto el programa no tiene dependencias de la biblioteca en tiempo de ejecución porque se cargaron al cargan el SW.
+		Esto se vería como una ventaja al no tener dependencias pero los programas son más pesados.
+		
+	Bibliotecas compartidas (o dinámicas)
+		En este caso, el enlazador simplemente se encarga de que el programa haga referencia a las bibliotecas correctamente. Sin embargo el vinculador
+		no copia ningún código de biblioteca en el archivo del programa. la biblioteca compartida debe estar disponible para satisfacer las dependencias del 
+		programa. 
+		
+	[ Convenciones de nomenclatura de archivos de objetos compartidos ]
+		El nombre de una biblioteca compartida, también conocida como soname, sigue un partrón que se compone de tres elementos:
+			- nombre de la biblioteca (normalmente precedibo por lib)
+			- so ( share object o objecto compartido)
+			- Número de versión de la biblioteca
+			
+		Por ejemplo: libpthread.so.0
+		
+		Por el contrario las bibliotecas estáticas terminan en .a libpthread.a 
+		
+		las ubicaciones comunes para las bibliotecas compartidas en un sistema Linux son:
+			/lib
+			/lib32
+			/lib64
+			/usr/lib
+			/usr/local/lib 
+			
+	[ Configuración de rutas bibliotecas compartidas ]
+	
+		Las referencias se reseuelven mediante el vinculador dinámico (ld.so o ld-linux.so) cuando se ejecuta el programa. Este vinculador busca bibliotecas en varios
+		directorios, la ruta se configura en el directorio /etc, es decir en /etc/ld.so.conf o en /etc/ld.so.conf.d.
+		
+		El archivo /etc/ld.so.conf solo incluye una sola linea include para los archivos *.conf en el directorio /etc/ld.so.conf.d.
+		
+		El directorio /etc/ld.so.conf.d. contiene archivos *.conf, estos deben incluir las rutas absolutas a los directorios de las bibliotecas compartidas.
+		
+		por ejemplo:
+			 cat /etc/ld.so.conf.d/x86_64-linux-gnu.conf
+				# Multiarch support
+				/usr/local/lib/x86_64-linux-gnu
+				/lib/x86_64-linux-gnu
+				/usr/lib/x86_64-linux-gnu
+				
+			
+			
+		El comando ldconfig se encarga de leer estos archivos de configuración y crea los enlaces simbolicos mencionados que ayudan a localizar las bibliotecas
+		individuales y actualizar el archivo de caché /etc/ld.so.cache, cada vez que se agregan o actualizan archivos de configuración se debe ejecutar 'ldconfig'
+		
+		{ opciones de ldconfig }
+		
+			-v 
+			-p - imprime las listas de directorios y bibliotecas candidatas almacenadas en la caché actual. 
+		
+		Además de los archivos de conf la variable LD_LIBRARY_PATH se puede usar para agregar rutas para bibliotecas compartidas temporalmente.
+		
+			por ejemplo para agregar /usr/local/mylib a la shell actual.
+			LD_LIBRARY_PATH=/usr/local/mylib
+		
+		ver el valor de la variable 
+			echo $LD_LIBRARY_PATH
+			
+		exportar la variable a todos los procesos secundatios
+			export LD_LIBRARY_PATH=/usr/local/mylib
+			
+		eliminar una variable:
+			export LD_LIBRARY_PATH=/usr/local/mylib
+	
+
+	[ Buscando las dependencias de un ejecutable particular ]
+	
+		Para buscar las bibliotecas compartidas requeridas por un programa en específico, hay el comando ldd seguido de la ruta absoluta al programa.
+		Muestra la ruta del archivo de la biblioteca compartida, dirección de memoria que se carga.
+		
+		ldd /usr/bin/git
+			linux-vdso.so.1 (0x00007fff26969000)
+			libpcre2-8.so.0 => /lib/x86_64-linux-gnu/libpcre2-8.so.0 (0x00007f0a1230b000)
+			libz.so.1 => /lib/x86_64-linux-gnu/libz.so.1 (0x00007f0a122ec000)
+			libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f0a12107000)
+			/lib64/ld-linux-x86-64.so.2 (0x00007f0a12783000)
+			
+		tambien usamos para buscar dependencias de un objeto compartido:
+			ldd /lib/x86_64-linux-gnu/libz.so.1
+			
+		con la opción -u imprime las dependencias directas no utilizadas si existen.
+			ldd -u /usr/bin/git
+		
+		Las dependencias no utilizadas está relacionada con las opciones utilizadas por el vinculador al construir el binario.
+		Para investigar usamos readelf u objdump.
+				
+		
+
+{ 102.4 Gestión de paquetes Debian }
+
+	Áreas de conocimiento clave
+	• Instalar, actualizar y desinstalar paquetes binarios de Debian.	
+	• Encontrar paquetes que contengan archivos o librerías específicos (estén o no instalados).	
+	• Obtener información del paquete como la versión, contenido, dependencias, integridad del 
+	paquete y estado de la instalación (tanto si el paquete está instalado como si no lo está).	
+	• Conocimientos de apt.
+
+
+	Lista parcial de archivos, términos y utilidades
+	• /etc/apt/sources.list
+	• dpkg
+	• dpkg-reconfigure
+	• apt-get
+	• apt-cache
 				
 				
+	dpkg - apt ---> Debian y derivados, no gestiona dependencias, del mismo modo no elimina el paquete si otro depende de el.
+	
+	dpkg 
+		-i	--> instalar 
+		-r	--> elimina el paquete 
+		-P	--> Purge
+		-i --force --> fuerza la instalación `no recomendado`
+		-I --> para mostrar información, mantenedor, version, arquitectura, depedencias y mas...
+		--get-selections --> mostrar paquetes instalados
+		-L --> lista de cada archivo instalado por un paquete
+	
+	dpkg-query 
+		-S --> averigua qué paquete posee un archivo específico.
+	
+	dpkg-reconfigure --> reconfigurar un paquete
+	
+	
+	apt-get --> descargar, instalar, actualizar o eliminar paquetes del sistema
+		- update 
+		- install
+			-f --> "Arreglar dependencias/paquetes rotos"
+		- remove
+			--purge
+		-upgrade
+		-clean --> elimina el contenido de los directorios de /var/cache/apt/archives y /var/cache/apt/archives/partial/
+		
+		
+	
+	apt-cache --> búsquedas, en el indice de paquetes
+		-search --> lista de cada paquete que contiene el patrón
+		-show	--> mostrara información completa, incluida la descripción
+	
+	apt-file --> se utiliza para buscar archivos dentro de los paquetes.
+		-list	--> Enumera el contenido de un paquete
+		-search	--> Buscar un archivo en todos los paquetes 
+	
+	[ La cache local ]
+	
+		los archivos .deb se descargan en /var/cache/apt/archives
+		los archivos parcialmente descargados se situan en /var/cache/apt/archives/partial/
+		
+	[ Lista de fuentes ]
+		apt utiliza una lista de fuentes, esta lista se almacena en el archivo source.list en el directorio /etc/apt. Lo podemos editar
+		
+		Contenido del archivo:
+		
+		deb http://us.archive.ubuntu.com/ubuntu/ disco main restricted universe multiverse
+		
+		Tipo de archivo:
+			un repositorio puede contener paquetes con SW listo para ejecutarse (paquetes binarios deb) o con el código de este SW 
+			(paquete fuente deb-src).
+			El ejemplo anterior proporciona paquetes binarios.
+			
+		url: 
+			la url del repositorio 
+		
+		Distribución:
+			Nombre o nombre en clave de la distribución para la que se proporcionan los paquetes. Un repositorio puede alojar paquetes 
+			para múltiples distribuciones.
+			En el ejemplo anterior; disco es el nombre en clave de ubuntu 19.04 disco dingo
+			
+		componentes:
+			cada componente representa un conjunto de paquetes. Estos paquetes pueden ser diferentes en diferentes distribuciones de linux.
+			por ejemplo en ubuntu y derivados son:
 				
-				
+				main:
+					-Contiene: paquetes de código abierto con soporte oficial
+					
+					-restricted: contiene SW de código cerrado con soporte oficial, como controladores de tarjetas graficas 
+					
+					-Universe: contiene SW de código abierto mantenido por la comunidad.
+					
+					-multiverse: contiene SW no compatible, de código cerrado o con patente grabada.
+					
+				en Debian los componentes principales son:
+					-main: Paquetes que cumplen con las Directices de SW libre de Debian (DFSG), los paquetes incluidos aquí se 
+					consideran parte de la distribución Debian.
+					
+					-Contrib: Contiene paquetes compatibles de DFSG, pero que dependen de otros paquetes que no están en main
+					
+					-non-fre: Contiene paquetes que no son campatibles con DFSG.
+					
+					-Security: Contiene actualizaciones de seguridad
+					
+					-backports: Contiene versiones más recientes de pquetes que están en main.
+					
+		Para agregar un nuevo repositorio de paquetes, agregamos la linea en el fichero source.list lo guardamos y cerramos,
+		luego actualizamos el indice de paquetes y ya podremos instalar los paquetes.
+					
+					
+		[ Directorio /etc/apt/source.list.d ]
+			Dentro de este directorio puede agregar archivos con repositorios adicionales para ser utilizados por APT, sin modificar el 
+			archivo principal source.list
 				
 				
 				

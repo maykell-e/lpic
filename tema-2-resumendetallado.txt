@@ -507,8 +507,10 @@ Tema 102: INstalacaión de Linux y gestión de paquetes
 					
 		[ Directorio /etc/apt/source.list.d ]
 			Dentro de este directorio puede agregar archivos con repositorios adicionales para ser utilizados por APT, sin modificar el 
-			archivo principal source.list
-				
+			archivo principal source.list, estos siguen el mismo patron de antes y la extensión .list
+			
+			 
+			Pag 126
 				
 				
 				

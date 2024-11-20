@@ -1,0 +1,557 @@
+Resumen libro lpic 101-500 
+
+	Tema 1 : Arquitectura del Sistema
+	
+	Areas de conocimientos clave:
+		+ Activar y desactivar los periféricos integrados
+		+ Diferenciar entre los distintos tipos de dispositivos de almacenamiento masivo
+		+ Determinar los recursos de HW para los dispositivos
+		+ Herramientas y utilidades para listar información de HW (lsusb, lspci...)
+		+ Herramientas y utilidades para manipular dispositivos USB
+		+ Conocimientos conceptuales de sysfs, udev, dbus.
+		
+	Lista parcial de archivos, términos y utilidades
+		* /sys/
+		* /proc/
+		* /dev/
+		* modprove
+		* lsmod
+		* lspci 
+		* lsusb 
+		
+	
+	[ Activación de dispositivos ]
+	
+		Se accede a esta utilidad normalmente con la tecla supr, f2 o f12, una vez en la utilidad 
+		es posible activar y desactivar
+			
+		periféricos integrados, activar la protección básica contra errores y cambiar 
+		configuraciones de HW como IRQ y DMA
+			
+	[ Inspección de dispositivos en Linux ]
+	
+		Hay 2 formas básicas de identificar recursos de HW en un sistema linux: comandos o 
+			leer archivos específicos en el SO
+			
+		{ Comandos para inspección }
+		
+		Los siguientes comandos proporcionan una lista de los dispotibos PCI y USB 
+		reconocidos por el SO, 	aunque no esten	operativos, dado que cada componente de HW 
+		requiere de un SW para controlar el dispositivo, este componente de SW se le llama
+		modulo del 'modulo del kernel',	este puede modulo del kernel puede formar 
+		parte del núcleo o agregarse.
+				
+		Los módulos del núcleo de linux relacionados con dispositivos de HW se
+		denominan 'controladores'.
+				
+		- lspci --------------> lista dispositivos actualmente conectados al bus PCI, 
+			retornara una lista, por ejemplo:					
+			00:15.0 PCI bridge: VMware PCI Express Root Port (rev 01)
+			00:15.1 PCI bridge: VMware PCI Express Root Port (rev 01)
+			00:15.2 PCI bridge: VMware PCI Express Root Port (rev 01)
+			00:15.3 PCI bridge: VMware PCI Express Root Port (rev 01)
+			00:15.4 PCI bridge: VMware PCI Express Root Port (rev 01)
+
+					
+			Los numeros del principio son las direcciones únicas del dispositivo PCI 
+			correspondiente	con la opción -s acompañada de la opción -v, mostrara un dispositivo en específico por ejemplo
+			
+			- lpic@lpic:~$ lspci -s 02:03.0 -v
+			02:03.0 USB controller: VMware USB2 EHCI Controller (prog-if 20 [EHCI])
+			DeviceName: ehci
+			Subsystem: VMware USB2 EHCI Controller
+			Physical Slot: 35
+			Flags: bus master, fast devsel, latency 64, IRQ 17
+			Memory at fd5ef000 (32-bit, non-prefetchable) [size=4K]
+			Capabilities: <access denied>
+			Kernel driver in use: ehci-pci
+
+						
+			El resultado es mucho mas detallado que el anterior y nos muestra:
+			Que en la dirección 02:03.0 se encuentra un dispositvo USB Controller
+			nombre interno ehci 
+			subsistema vmware USB2 EHCI controller 
+			Puerto fisico: 35
+			etiquetas: bus master, fast devsel, latency 64
+			memoria asignada para el dispositivo
+			capabilities: caracteristicas o funciones adicionales, en este caso access denied
+			Kernel driver in use: el dispositivo esta en uso por ehci-pci
+						
+			Por consiguiente:
+				El dispositivo ha sido identificado
+				Se cargó un módulo en el núcleo del SO
+				El dispositivo debe estar listo para usarse
+						
+				En las nuevas versiones la opción -k, proporciona otra forma de verificar qué módulo 
+				del núcleo del SO esta en uso para el dipositivo especificado, por ejemplo:
+					
+				lpic@lpic:~$ lspci -s 02:03.0 -k
+				02:03.0 USB controller: VMware USB2 EHCI Controller
+				DeviceName: ehci
+				Subsystem: VMware USB2 EHCI Controller
+				Kernel driver in use: ehci-pci
+					
+						
+				- lsusb --------------> disposivos USB actualmente conectados 
+				Este comando es similiar a lspci pero solo enumera la información de USB exclusivamente:
+				
+				lpic@lpic:~$ lsusb
+				Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+				Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+				Bus 002 Device 002: ID 0e0f:0003 VMware, Inc. Virtual Mouse
+				Bus 002 Device 003: ID 0e0f:0002 VMware, Inc. Virtual USB Hub
+				Bus 002 Device 004: ID 0e0f:0008 VMware, Inc. Virtual Bluetooth Adapter
+				
+				explicación: 
+				Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+				
+				Bus 001: 	indica el bus usb al que está conectado el dispositivo, en este caso el 1
+				Device 001:	Es el numero de dispositivo en ese bus, en este caso el 29
+				ID 1d6b:0002: indica al fibricante (1d6b) y el id de producto (0002)
+				Linux Foundation 2.0 root hub: dispositivo controlador raíz USB 2.0, gestionado por el SO linux 
+				
+				Al igual que lspci si introducimos la opción -v dara mas detalle del dispositivo por ejemplo:
+				
+				lpic@lpic:~$ lsusb -v -d 1d6b:0002
+
+				Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+				Couldn't open device, some information will be missing
+				Device Descriptor:
+				  bLength                18
+				  bDescriptorType         1
+				  bcdUSB               2.00
+				  bDeviceClass            9 Hub
+				  bDeviceSubClass         0 [unknown]
+				  bDeviceProtocol         0 Full speed (or root) hub
+
+				la salida del comando es muy larga en este caso solo se mostro una parte
+				Con la opción -t muestra las asignaciones de los dispositivos usb en forma de árbol jerárquico:
+				lpic@lpic:~$ lsusb -t
+				/:  Bus 001.Port 001: Dev 001, Class=root_hub, Driver=ehci-pci/6p, 480M
+				/:  Bus 002.Port 001: Dev 001, Class=root_hub, Driver=uhci_hcd/2p, 12M
+					|__ Port 001: Dev 002, If 0, Class=Human Interface Device, Driver=usbhid, 12M
+					|__ Port 002: Dev 003, If 0, Class=Hub, Driver=hub/7p, 12M
+						|__ Port 001: Dev 004, If 0, Class=Wireless, Driver=btusb, 12M
+						|__ Port 001: Dev 004, If 1, Class=Wireless, Driver=btusb, 12M
+
+				Para verificar qué dispositivo está usando el módulo btusb, tendremos que introducir la opción -s,
+				con el id de bus y el id de dispositivo (dev) del comando lsusb
+				
+				lpic@lpic:~$ lsusb -s 002:003
+				Bus 002 Device 003: ID 0e0f:0002 VMware, Inc. Virtual USB Hub
+				
+			{ MOdulos del SO }
+				Preferiblemente con kmod, conjunto de harramientas para manejar tareas comunes con módulos
+				del kernel:
+					insertar:						modprobe 
+					
+					eliminar:						modprobe -r (si el modulo no esta en uso)	
+					
+					enumerar:						lsmod ---------> lista los módulos cargados actualmente:
+														Este comando se divide en tres columnas:
+															Module, Size, used by (modulos dependientes) 
+															
+					verificar propiedades:			modinfo -p [modulo], por ejemplo:
+																										
+													Este comando muestra una descripción, el archivo, el autor, la licencia, 
+													la identificación, las dependencias y los parámetros disponibles para el módulo dado
+													
+													la opción -p mostrara los parámetros disponibles e ignore la otra información.
+													
+													lpic@lpic:/etc/modprobe.d$ modinfo -p mptspi
+													mpt_saf_te: Force enabling SEP Processor: enable=1  (default=MPTSCSIH_SAF_TE=0) (int)
+													
+					resolver dependencias y alias:	
+				
+				Algunos módulos requieren que otros módulos funcionen, por ejemplo dispositivos de audio:
+					lpic@lpic:~$ lsmod | fgrep -i snd
+					snd_ens1371            36864  0
+					snd_ac97_codec        196608  1 snd_ens1371
+					gameport               20480  1 snd_ens1371
+					snd_rawmidi            57344  1 snd_ens1371
+					snd_seq_device         16384  1 snd_rawmidi
+					
+					En la tercera columna vemos los módulos que requieres que el módulo de la primera 
+					columna funcione correctamente
+				
+				Para bloquear la carga automática de cualquier modulo, se tiene que gregar una línea al archivo 
+				/etc/modprobe.d/blacklist.conf o crear un archivo en la ruta /etc/modprobe.d/<module_name>.conf 
+				esta ultima opción	es la mas indicada y recomendada
+				
+				por ejemplo:
+					lpic@lpic:~$ cat /etc/modprobe.d/blacklist.conf
+					# This file lists those modules which we don't want to be loaded by
+					# alias expansion, usually so some other driver will be loaded for the
+					# device instead.
+
+					# evbug is a debug tool that should be loaded explicitly
+					blacklist evbug
+					
+					Es una buena practica añadir una pequeña descripción
+					
+			{ Archivos de información y archivos de dispositivos }
+			
+			Los comandos lspci, lsusb y lsmod -----> interfaz para leer la información del dispositivo 
+			almacenada por el SO, esta información se guarda en archivos especiales en los directorios /proc y /sys, estos 2 directorios son puntos de montaje
+			para pseudo-sistemas, solo existen mientras el sistema se está ejecutando.
+			
+			Algunos de los archivos importantes en /proc son:
+			
+				/proc/cpuinfo:		---> Enumera información detallada sobre las CPU encontradas por el SO
+				
+				/proc/interrupts:	--->Lista de interruciones por dispositivos E/S para cada CPU
+				
+				/proc/ioports:		---> Enumera los puertos de E/S registrados actualmente en uso 
+				
+				/proc/dma:			---> enumera los canales DMA registrados en uso 
+				
+			Los archivos dentro de /sys tienen roles similares con /proc, sin embargo el directorio /sys,
+			tiene el proposito específico de almacenar información del dispositivo y datos del kernel relacionados
+			con el HW, mientras que /proc contiene información sobre varias estructuras de datos del kernel incluidos los procesos en ejecución y la configuración.
+			
+			Otro directorio relacionado con dispositivos es /dev, dispositivos de almacenamiento,
+			un HD IDE Heredado está representado por el archivo /dev/hda y cada partición como /dev/hda1 /dev/hda2,
+			estos son manejados
+			por udev.
+			
+			BIOS esta pasando a ser UEFI en los sistemas x86
+				
+				
+		Tema: 101.2 Arranque del sistema
+			Áreas de conocimiento clave
+				• Proporcionar comandos comunes al gestor de arranque y opciones al kernel en el momento
+					del arranque.
+				• Demostrar conocimiento de la secuencia de arranque desde BIOS/UEFI hasta la finalización
+					del arranque.
+				• Comprensión de SysVinit y systemd.
+				• Conocimiento de Upstart.
+				• Comprobar los eventos de arranque en los archivos de registro.
+			
+			Lista parcial de archivos, términos y utilidades
+				• dmesg
+				• journalctl
+				• BIOS
+				• UEFI
+				• bootloader
+				• kernel
+				• initramfs
+				• init
+				• SysVinit
+				• systemd
+				
+			Proceso de arranque en un PC con BIOS / UEFI
+
+				BIOS ---> Basic Input Output System ---> MBR 
+					1-POST (power-on self-test)
+					2-BIOS activa los componentes básicos para el SO, salida de video, teclado y medios de almacenamiento 
+					3-BIOS carga la primera etapa del gesto de arranque desde MBR (los primeros 440 bytes del primer dispositivo)
+					4-La primera etapada del gestor de arranque llama a la segunda etapa del gestor de arranque, responsable de presentar
+					  las opciones de arranque y cargar el núcleo del SO
+					  
+				UEFI ---> Unified Extensible Firmware Interface ---> GPT
+					1- POST
+					2- UEFI activa los componentes básicos para el SO
+					3- El Firmware UEFI lee las definiciones alamacenas en NVRAM para ejecutar la app EFI predefinida almacenada en el sistema
+					   de archivos de la patición ESP, por lo general la aplicación EFI predefinida es un gestor de arranque
+					4- Si la app EFI predefinida es un gestor de arranque, carga el núcleo para iniciar el SO 
+					
+					
+			{ Cargador de arranque }
+				El gestor de arranque más popular para Linux en arquitectura x86 es GRUB (Grand Unified Bootloader).
+				Cuando lo llame la BIOS, GRUB muestra una lista de los sistemas operativos disponibles para arrancar
+				
+				La mayoría de los parámetros del núcleo siguen el patrón option=value. algunos de los más útiles son:
+				
+					-acpi
+						Habilita/deshabilita el soporte ACPI, acpi=off, deshabilitará la compatibilidad con ACPI
+					
+					-init
+						Iniciador del sistema alternativo, por ejemplo init=/bin/bash establecerá shell bash, esto significa que se iniciará
+						una sesión de shell justo después del proceso de arranque del kernel
+					
+					-systemd.init 
+						Establece a systemd para que se active, systemd.unit=graphical.target, también acepta los niveles de ejecución
+						numéricos definidos para sysv.
+						systemd.unit=3
+						systemd.unit=S
+					
+					-mem
+						Cantidad de memoria RAM para el SO, limita la cantidad a ese numero
+						
+					-maxcpus
+						limita el número de procesadores, un valor de 0 desactiva el soporte para máquinas multiprocesador, mismo que nosmp
+						
+					-quiet
+						oculta la mayoría de los mensajes de arranque
+						
+					-vga
+						selecciona un mode de video, parámetro vga=ask lista los modos disponibles para elegir
+						
+					-root
+						Establece la particion raíz, distinta a la preconfigurada en el gestor de arranque.
+						root =/dev/sda3
+						
+					-rootflags
+						opciones de montaje para el sistema de archivos raíz
+						
+					-ro
+						montaje inicial del sistema de archivos raíz sea de solo lectura
+					
+					-rw
+						Permite escribir en el sistema de arhivoz raíz durante el montaje inicial.
+						
+				Para agregar parámetros del núcleo del SO se agregar al archivo /etc/default/grub en la linea GRUB_CMDLINE_LINUX para que 
+				sean persistentes al reinicio de la maquina, cuando se cambia el fichero es necesario generar un nuevo archivo de
+				configuracion mediante el comando:
+					-grub-mkconfig -o /boot/grub/grub.cfg
+					
+				Una vez echo el proceso los parametros se pueden encontrar en el fichero /proc/cmdline
+				
+			{ Cargador de arranque } pag 26
+			
+				Init es el primer programa ejecutado, este se encarga de ejecutar todos los scripts de inicialización y demonios del sistema.
+				Existen implementaciones distintas de estoos iniciadores de sistemas aparte del init tradicional, como systemd y upstart.
+				
+				{ SysV standard }
+					Administrador de servicios basado en el estándar SysVinit, controla que demonios y recursos estarán disponibles mediante
+					runleves, que van del 0 al 6, los niveles 0, 1 y 6 son iguales en todas las distribuciones
+				
+				{ systemd }
+					Administrador moderno de sistemas y servicios con una capa de compatibilidad para los comandos y niviles de SysV,
+					activación del servicio, ejecución de demonios a demanda,
+					monitoreo de procesos con cgroups, snapshot support, recuperación de sesión del sistema, control
+					de punto de montaje y un control de servicio basado en la dependencia
+					
+				{ Upstart }
+					Al igual que systemd, este es un sustituto de init, su objetivo es acelerar el proceso de arranque,
+					Hoy en dia paso a systemd 
+					
+			{ Inspección de inicialización }
+				Existen errores en el proceso de arranque pero estos pueden no ser criticos y el SO se iniciaria, pero estos errores quedarian
+				registrados en la memoria el cual se llama 'kernel ring buffer'. estos mensajes se borran al apagar el PC o con dmesg --clear.
+				
+				Sin opciones el comando dmesg muestra los mensajes actuales en el búfer del núcleo.
+				
+				lpic@lpic:~$ dmesg
+				[ 5.262389] EXT4-fs (sda1): mounted filesystem with ordered data mode. Opts:
+				(null)
+				[ 5.449712] ip_tables: (C) 2000-2006 Netfilter Core Team
+				[ 5.460286] systemd[1]: systemd 237 running in system mode.
+				
+				la salida del comando puede contener nietnos de líneas
+				
+				En los sistemas basados en systemd, el comando journalctl mostrará los mensajes con las opciones -b, --boot, -k o --dmesg.
+				
+				El comando journalctl --list-boots muestra una lista de números de arranque relativos al arranque actual, su hash de 
+				identificación y las marcas de tiempo del primer y último mensaje correspondiente.
+				
+				Podemos inspeccionar los registros actuales y pasados con las opciones:
+					journalctl -b {identificador del arranque}
+					journalctl -0 o --boot=0 registros acutuales
+					journalctl -b -1 o --boot=-1 registros de la inicialización anterior
+					
+				la inicialización y otros mensajes se guardan en /var/log. 
+				
+				las opciones -D o --directory del comando journalctl se pueden usar para leer mensajes que no esten en /var/log/journal/
+				que es la ubicación predeterminada para los mensajes, estos mensajes de registro se almacenan en texto sin formato, 
+				por lo cual se requiere el comando journalctl para leerlos.
+				
+				
+			TEMA 101.3 Cambiar los niveles de ejecución / objetivos de arranque y apagar o reiniciar el sistema
+			
+				Áreas de conocimiento clave
+					• Establecer el nivel de ejecución o el objetivo de arranque predeterminado.
+					
+					• * Cambiar entre niveles de ejecución / objetivos de arranque, incluido el modo monousuario.
+					Apagar y reiniciar desde la línea de comandos.
+					
+					• Alertar a los usuarios antes de cambiar de nivel de ejecución/objetivo de arranque u otros
+					eventos importantes del sistema.
+					
+					• Terminar procesos de forma adecuada.
+					
+					• Conocimiento de acpid.
+					
+				Lista parcial de archivos, términos y utilidades
+					• /etc/inittab
+					• shutdown
+					• init
+					• /etc/init.d/
+					• telinit
+					• systemd
+					• systemctl
+					• /etc/systemd/
+					• /usr/lib/systemd/
+					• wall
+					
+				Una caracteristica común entre los SO de UNIX son los procesos, separados para controlar distintas funciones del SO, 
+				llamados daemons o services, responsables tambien de características extendidas del SO (HTTP, SSH, correo ...), bases de datos,
+				configuración bajo demanda, etc.
+				
+				Estos daemon o servicios se debe de poder modificar sin tener que apagar el SO, las diferentes distribuciones de linux ofrece
+				diferentes formas de administración de estos servicios para controlar el sistema.
+				
+				Estos servicios pueden ser controlados por scrips de shell o por un programa y sus archivos de configuración compatibles.
+				
+				El primer método lo implementa el estándar SysVinit tambien llamado system V o SysV.
+				
+				El segundo método es implementado por systemd y Upstart.
+				
+				El primer proceso que se ejecuta es el administrador de servicios con el PID 1
+			
+			{ Éstandar SysVinit }
+			
+				Esté estandar proporcionará conjuntos predefinidos de estados del sistema, llamados runlevels, y sus script de servicios
+				para ser ejecutados, los niveles de ejecución están numerados de 0 a 6 y generalmente son los siguientes:
+					
+					Runlevel 0			---> Apagado del sistema 
+										
+					Runlevel 1			---> Modo de usuario unico, sin red y otras capacidades no esenciales (mantenimiento)
+					
+					Runlevel 2,3 o 4	---> Modo multiusuario, pueden iniciar sesión por consola o red, los niveles 2 y 4 no suelen utilizarce
+					
+					Runlevel 5			---> Modo multiusuario con interfaz grafica, igual al 3
+					
+					Runlevel 6			---> Reinicio del sistema 
+				
+				El programa encargado de administrar los niveles y demonios/recursos asociados es /sbin/init.
+				Durante el inicio init identifica el nivel por parametro o lee el archivo /etc/inittab y carga los scrips asociados 
+				que se enumeran allí para cada runlevel.
+				
+				Cada nivel puede tener muchos scripts generalmente en /etc/init.d/
+				
+				la sintaxis del archivo /etc/inittab usa este formato:
+					id:runlevels:action:process
+					
+						-id: identificador único para la entrada en el fichero /etc/inittab, identifica la linea
+						
+						-runleves: especifica los niveles de ejecución en los que debe ejecutarse el proceso
+						
+						-action: deifine la actión que debe realizarce cunado alcanza uno de los runlevels
+						
+						process: comando o proceso a ejecutar en el runlevel indicado
+						
+				Las acciones disponibles son:
+					-boot: Se ejecutará durante la iniciañización del sistema, runlevel se ignora
+					-bootwait: se ejecuta durante el inicio del sistema e init espera que termine para continuar, runlevel ignora
+					-sysinit: proceso se ejecutará despueés de la inicialización del sistema, independiente del runvelel, se ignora
+					-wait: se ejecutará en los niveles dados e init esperará hasta que termine
+					respawn: el proceso se reiniciara sin finalización
+					ctrlaltdel: proceso se ejecuta con la ' ctrl + alt + supr', esto lo recibira init e inicia el proceso 
+					
+					Cada vez que se modifca el fichero /etc/inittab se debe ejecutar el comando ' telinit q ' para que cargue
+					la configuracion y evite errores de sintaxis
+					
+					Cada nivel de ejecución tendra sus ficheros en la ruta /etc/rc1.d/, /etc/rc2.d/ ... 
+					dentro de estos directorios encontraremos enlaces simbólicos a los scripts en /etc/init.d/, la primera letra
+					del archivo representa si se ejecuta o se mata el proceso, la leta K = killer, la letra S = start
+					
+					El comando runlevel, muestra el nivel actual.
+					
+					lpic@lpic:/etc/rc1.d$ runlevel
+					N 5
+
+					La letra N significa que el runlevel no a cambiado desde la ultima vez.
+					
+					El comando init y telinit sirven para saltar de un runlevel a otro.					
+					telinit 1,telinit s o telinit S	cambiarán el sistema al nivel de ejecución 1.
+
+			{ Estandar systemd }
+			 
+			 Los servicios del sistema systemd los llama units, que consta de nombre, tipo y archivo de conf correnpondiente.
+			 por ejemplo para un proceso de servidor httpd será httpd.service.
+
+			 Hay siete tipos distintos de unidades systemd:
+				
+				Service: unidad más común, para recursos activos del sistema que se pueden iniciar, interrumpor y recargar
+				
+				socket: puede ser de sistema de archivos o un socket de red. todas las unidades de socket tienen una unidad 
+						de servicio correspondiente, cargada cuando el socket recibe una solicitud
+				
+				device: unidad de dispositivo asociada con un dispositivo HW, un dispositivo solo se tomará como unidad
+						systemd si existe una regla udev para este propósito.
+						
+				mount: unidad de montaje es una definición de punto de montaje en el sistema de archivos, similar a una entrada
+						en /etc/fstab
+						
+				automount: Unidad de montaje automático también es una definición de punto de montaje en el sistema de archivos 
+				
+				target: agrupación de otras unidades, administradas como una sola unidad 
+				
+				snapshot: estado guardado del administrador del sistema (no disponibles en todas las versiones liux) 
+				
+				Comando principal para controlar las unidades es systemctl, activación, desactivación, ejecución, interrución,
+				monitoreo ... de una unidad, por ejemplo:
+					 
+					 systemctl start
+					 systemctl stop
+					 systemctl restart
+					 systemctl status
+					 systemctl is-active
+					 systemctl enable
+					 systemctl disable
+					 systemctl is-enable (si la unidad comienza con el sistema, 0=si 1=no)
+					 
+				El comando systemctl también puede controlar system targets con systemctl isolate por ejemplo:
+					systemctl isolate multi-user.target 
+					
+				Para persistir el runlevel:
+					systemctl set-default multi-user.target (modifica el enlace simbolico /etc/systemd/system/default.targe)
+					
+				Para saber el objetivo de arranque predeterminado:
+					systemctl get-default
+				
+				Para listar todas las unidades disponibles y muestra si estan habilitadas para el inicio:
+					systemctl list-unit-files
+				Los archivos de configuración de estas unidades estan en /lib/systemd/system
+				
+				La opción --type seleccionará solo las unidades para un tipo dado; 
+					systemctl list-unit-files --type=service 
+					systemctl list-unit-files --type=target.
+					
+				Las unidades activas o unidades que han estado activas durante la sesión actual se utiliza systemctl list-units
+					systemctl list-units --type=service
+					systemctl list-units --type=target
+					
+				systemd tambien se encarga de eventos relacionados con la energía del sistema siempre y cuando no haya otro 
+				administrador como acpid.
+					systemctl suspend ---> sistema en suspención (datos en ram)
+					systemctl hibernate -> sistema en hibernación (datos en disco)
+					
+			
+			
+			{ Upstart }
+				Los scrips de inicialización se encuentran en el directorio /etc/init.
+				los servicios del sistema se pueden enumerar con el comando initctl list, muestra el estado actual de los servicios
+				si está disponible su PID 
+				
+					# initctl list
+					avahi-cups-reload stop/waiting
+					avahi-daemon start/running, process 1123
+					mountall-net stop/waiting
+					mountnfs-bootclean.sh start/running
+					nmbd start/running, process 3085
+					passwd stop/waiting
+					rc stop/waiting
+					
+				Cada acción de upstart tiene su propio comando independiente, por ejemplo el comando start puede usarse
+				para iniicar la sexta terminal virtual:
+				
+					start tty6
+					status tty6
+					stop tty6
+				
+				Upstart no usa el archivo /etc/inittab, pero los comandos runlevel y telinit pueden usarse
+				
+				
+			{ Apagado y reinico }
+			
+				shutdown envia una señal SIGTERM luego SIGKILL, luego el sistema se apaga o cambia de nivel de ejecución
+						 si no se especifica las opciones -h o -r, el sismeta alterna al nivel de ejecución 1
+						 
+				systemctl reboot
+				systemctl poweroff
+				shutdown 
+				
+			Para avisar a todos los usuarios conectados a la maquina se utiliza el comando wall
+			

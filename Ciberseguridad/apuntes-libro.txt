@@ -1,0 +1,1936 @@
+--------------------------------------------------topic 101 ----------------------------------------------------------
+comandos:	
+	lspci
+	lsusb
+	lsmod, insmod, modprobe, modinfo, /etc/modprobe.d/blacklist.conf
+	acpi
+	init
+	/etc/default/grub grub-mkconfig -o /boot/grub/grub.cfg.
+	dmesg
+	journal
+	telinit q se debe ejecutar cada vez que se modifica el archivo /etc/inittab
+	systemctl para systemd
+	shutdown
+	systemctl reboot
+	systemctl poweroff
+	wall
+
+---------------------------------------------------------------------
+sysv 48 pag
+	run 0 shutdown
+	run 1 single mode, no red, modo mantenimiento
+	run 2 3 4 modo multiusuario. 2 y 4 no se usan mucho
+	run 5 multiusuario. igual al anterior pero con modo grafico
+	run 6 reinicio
+	quien se encarga de admiistrar los runlevels es /sbin/init
+	
+systemd 51 pag
+	para alternar entre diferentes objetivos systemctl isolate [tarjet, multi-user.target]
+	para apuntar al objetivo deseado: systemctl set-default multi-user.target
+	para que me de el default: systemctl get-default
+
+	
+--------------------------------------------------topic 102 ----------------------------------------------------------
+comandos:
+	grub-install
+	para instalar grub en una particion: grub-install --boot-directory=/mnt/tmp /dev/sda , /mnt/tmp es donde se instala
+	update-grub genera un archivo de configuracion compatible con la configuracion que hemos echo
+	grub-mkconfig -o /boot/grub/grub.cfg lo mismo que el anterior 
+
+pag 66
+
+particiones:
+	/var
+	/home 
+	/boot
+	ls -l /dev/disk/by-uuid/
+	
+------------------------------------------------------------------------------------------------------------------
+comandos:
+		ldconfig lee archivos de configuracion, crea enlaces simbolicos que ayudan a localizar las bibliotecas
+		y actualiza la cache de la libreria en /etc/ld.so.cache
+			-v muestra versiones de la biblioteca, nombre del directorio y los enlaces que se crean
+			-p, --print-cache imprime las listas de directorios y bibliotecas almacenadas en la cache actual
+			
+			-------------------------------------------------------------
+			- la variable LD_LIBRATY_PATH se usa para agregar nuevas	-
+			- rutas de libs temporalmente, se separan por :				-
+			- ejemplo [ LD_LIBRARY_PATH=/usr/local/mylib]				-
+			-------------------------------------------------------------
+			
+			para exportar a todos los procesos secundarios generados desde esa shell, comando:
+				export LD_LIBRARY_PATH=/usr/local/mylib
+				
+			para eliminar la variable de entorno: unset LD_LIBRARY_PATH
+			para cargarlo desde el inicio esta el archivo de configuracion ~/.bashrc
+---------------------------------------------------------------------------------------------------------------
+		
+		para buscar las bibliotecas compartidas requeridas por un programa especifico, comando [ldd] seguido 
+		de la ruta absoluta del programa, tambien buscar dependencias de un objeti pag 95
+			ldd /usr/bin/git
+			opcion -o o --unused ldd imprime las dependencias directas no utilizadas
+				ldd -u /usr/bin/git
+				
+		unset: elimina variables de entorno
+			unset myvar
+			
+		readelf: muestra informacion sobre archivos ELF
+		
+		objdump: imprime inforamcion de archivos de objetos
+			objdump -p /bin/bash | grep NEEDED
+		
+		
+biblioteca compartidas:
+	nombre: lib
+	so que significa objeto compartido
+	numero de version
+		un ejemplo seria [lib]pthread.[so].[0]
+	
+biblioteca estatica terminan en .a, p. ej libpthread.a.
+
+Las ubicaciones comunes para las bibliotecas compartidas en un sistema Linux son:
+• /lib
+• /lib32
+• /lib64
+• /usr/lib
+• /usr/local/lib
+
+/etc/ld.so.conf lista de directorios para que el programa busque las bibliotecas compartidas
+
+/etc/ld.so.conf contiene archivos *.conf
+
+
+68,77 grub 
+
+-----------------------------------102.4 gestion de paquetes dpkg apt ---------------------------------------------
+comandos:
+	dpkg (debian) no gestiona dependencias
+		-i install packege
+		
+		-r delete packege pero conserva los archivos de configuracion, se puede pasar varios nombres para eliminar
+		
+		-P purga los paquetes, elimina todo y no conserva nada
+		
+		-I para obtener informacion sobre un paquete, version, arquitectura, dependencias
+		
+		--get-selections paquetes instalados en el sistema
+		
+		-L Paquete para obtener una lista de cada archivo instalado por un paquete especifico
+		
+		dpkg-query -S /usr/bini/ssh para averiguar que paquete posee un archivo en el sistema
+		
+	dpkg-reconfigure este comando reconfigura un paquete 
+	
+	apt-get
+		se utiliza para descargar, instalar, actulizar o eliminar paquetes del sistema
+		-update actuliza el indice de paquetes para recuperar informacion
+		-install instala un paquete
+			-f intentara arreglar los paquetes rotos
+		-remove elimina un paquete mantiene archivos de configuracion
+		-purge elimina el paquete y sus archivos de configuracion [apt-get purge o apt-get remove --purge]
+		-upgrade actualiza los paquetes a la ultima version se utiliza despues de apt-get update
+	
+	apt-cache
+		se utiliza para realizar operaciones como busquedas en el indice de paquetes
+		-search para buscar un patron de busqueda
+		-show muestra informacion completa, incluida la descripcion del paquete
+	
+	apt-file
+		se utiliza para buscar archivos dentro de los paquetes (busqueda)
+		-list busca en nuestro sistema el contenido de un paquete
+		-search busque que paquete proporciona el servicio
+	
+	apt es la simplificacion de apt-get y apt-cache, sin embargo este paquete puede no estar instalado por 
+		lo cual se recomianda aprender apt-get y apt-cache
+	
+	las fuentes se guardan en el archivo sources.list ubicado en /etc/apt
+	
+	Tambien se puede agregar archivos con repositorios adicionales en la ruta /etc/apt/sources.list.d/
+
+	
+	
+	
+	
+-----------------------------------102.5 gestion de paquetes rpm yum 126----------------------------------------
+
+comandos:
+	rpm
+		rpm -i paquete instala un paquete
+		rpm -U actualiza un paquete
+		rpm -e desintala un paquete 
+		rpm -F solo actualiza 
+		rpm -h imprime # en el proceso de instalacion
+		rpm -v salida detallada
+		rpm -qa lista paquetes instalados
+		rpm -qi informacion de paquetes
+		rpm -ql obtener una lista de los archivos que estan dentro de un paquete instalado
+		rpm -ql -p si le agrega la p obtenes informacion o una lista de archivos de un paquete no instalado
+		rpm -qf /usr/bin/unzip averigua que archivo posee un paquete instalado dara esto :-unzip-6.0-19.el7.x86_64
+		clean packages
+		clean metadata
+		
+	rpm2cpio
+	
+	
+	yum
+		search paquete busca el nombre de los paquetes que coincidan con la palabra
+		install instala el paquete
+		update wget actualiza un paquete
+		check-update paquete busca actulizacion para un paquete en especial
+		remove elimina un paquete
+		whatprovides libgimpui-2.0.so.0 encontrar que paquete proporciona un archivo especifico 
+		info informacion de un paquete
+		repolist all listar repositorios disponibles
+		
+	#yum-config-manager --add-repo https://rpms.remirepo.net/enterprise/remi.repo	
+		con el comando yum-config-manager agrega el repo https:url con el parametro --add-repo 
+		
+	dnf
+		search
+		info
+		install
+		remove
+		upgrade
+		provides
+		list --installed
+		repoquery -l listar el contenido de un paquete
+		repolist repositorios disponibles
+			--enabled
+			--disabled
+			
+	zypper 
+		refresh actualizar la informacion de los paquetes
+		search o se para buscar un paquete
+		se -i para listar paquetes instalados
+		install o in para instalar
+		update actualizar los paquetes instalados
+		list-update listar las actualizaciones 
+		rm eliminar un paquete y cualquier otro que dependa de el 
+		se --provides /usr/lib64/libgimpmodule-2.0.so.0 ver que paquete contiene un archivo especifico
+		info informacion del paquete
+		repos para ver los repositorios
+		modifyrepo -d repo-non-oss [modifyrepo] modifica si estan habilitados o no, -d -e enable y disabled
+		modifyrepo 
+			-F actulizacion automatica desactivada
+			-f actulizacion automatica
+		addrepo url packman para agregar el repositorio packman con la url del sitio
+		removerepo para eliminar un repositorio
+		
+			
+
+-----------------------------------102.6 Linux como huesped de virtualizacion---------------------------------------
+comandos:
+	dbus-uuidgen --ensure validar que exuste una id de maquina D_BUS para el sistema en ejecucion
+	
+	dbus-uuidgen --get para obtener el odentificador de la maquina actual
+	
+	ssh-keygen crea un par de claves publica y privada
+	
+	ssh-copy-id -i <public_key> user@cloud_server
+		copia la llave publica al servidor remoto de la nube
+		
+	cloud-init ayudar en la configuracion e implementacion de maquinas virtuales y contenedores en la nube
+	
+	
+
+tipos de hipervisores:
+	xen: codigo abierto tipo 1
+	kvm: tipor 1 y tipo 2
+	virtualbox: tipo 1
+	vmware: tipo 1 y tipo 2
+	
+tipos de maquinas virtuales
+	totalmente virutalizado ( fully virtualized)
+	
+	paravirtualizado (paravirtualized)
+	
+	hibrido (hybrid)
+	
+No hay 2 identificadores iguales que se ejecuten en un hypervisor, el D-Bus se encuentra en 
+	/var/lib/machine-id y esta vinculada a /etc/machine-id.
+	
+	Para generar una nueva D-Bus:
+		$ sudo rm -f /etc/machine-id
+		$ sudo dbus-uuidgen --ensure=/etc/machine-id
+	En el caso de que /var/lib/dbus/machine-id no sea un enlace simbólico a /etc/machine-id,
+	entonces será necesario eliminar /var/lib/dbus/machine-id.
+	
+	
+	
+-----------------------------------103 comandos gnu y unix ------------------------------------------------------
+pag 175 en adelante
+		
+		
+-----------------------------------103.1 y 103.2 trabajar desde linea de comandos------------------------------------------
+comandos:
+	bash
+	
+	echo imprime por pantalla
+	
+	env variables de entorno de la sesion actual
+	
+	export exporta variables de entorno
+	
+	pwd
+	
+	set genera todas las variables y funciones
+	
+	unset eliminar variable
+	
+	type para obtener datos basicos sobre un comando
+	
+	which
+		ubicacion del comando
+	man
+	
+	uname
+	
+	history historial de comandos
+		el historia se guarda en el archivo bash_history ~/.bash_history
+	
+	ls
+	
+	touch
+	
+	apropos para buscar atraves de los nombres y descripciones de la pagina man
+	
+	uname informacion del sistema
+		-a toda la informacion
+		
+	help ayuda para un comando
+
+	grep 
+	
+	rm elimina 
+	
+	
+PATH directorios donde su shell buscaran otros programas sin tener que especificar una ruta completa
+
+para crear una variable:
+	myvar=hello
+	echo $myvar
+		De esta manera solo estara disponible en la shell actual, si queremos que la variable se expanda a las
+		demas shell tendremos que utilizar el comando export eje:
+			export myvar
+
+para eliminar una variable
+	unset myvar
+	
+	
+-----------------------------------103.2 procesar secuencias de texto usando filtros 200-------------------------------
+
+comandos:
+	grep filtra
+		-v indica al comando que solo muestre las lineas que no contienen una palabra
+		
+	sort ordena la salida
+		-u unico
+	
+	split divide archivos grandes en archivos mas pequeños
+		-l especifica el numero de lineas 
+		-d enumera los archivos
+	
+	tail
+		-n limita el numero de lineas
+		
+	tr
+		comando traducir puede reemplazar caracteres y tambien elimina y comprime caracteres repetidos
+		tr 'a-z' 'A-Z' < archivo.txt de miniscula a mayuscula
+		-d elimina caractere ' ' tiene que estar entre comillas
+		-s para comprimir caracteres, tr -s ' ' < archivo.txt, esto comprime todos los espacios a uno
+	
+	uniq enumera y contar cadenas coincidentes
+	
+	wc cuenta las palabras
+		-l imprime el numero de lineas de texto que el comando ha leido
+		-c para mostrar el equivalente de caracteres
+		-An -c para no mostrar el desplazamiento de byte y tampoco muestra los caracteres dentro del archivo
+		
+	cat
+	
+	cut imprime columnas de archivos de texto como campos basados en el delimitador de un caractes
+	
+	head
+	
+	less
+	
+	nl numero de lineas de un archivo
+	
+	od para ver el contenido de un archivo en formato octal
+		-x para ver el contenido en formato hexadecimal
+		
+	paste unir archivos en columnas segun el uso de separadores de campo
+		-d para delimitador personalizado para separar las lineas combinadas, 
+			paste -d ' ' archivo1 archivo2
+		
+		-s combina lineas de entrada en una sola linea de salida, en lugar de unirlas en columnas
+			paste -s archivo1 archivo2
+	
+	sed manipulacion y transformacion en archivos de textos
+		-n /cat/p < ftu.txt muestra las lineas que conienen la cadena cat, SOLO LAS LINEAS QUE COINCIDEN
+		s/cat/dog < ftu.txt sustituye cat por dog del archivo ftu.txt
+		-i.backup s/cat/dog ftu.txt la opcion -i.backup genera un backup, s/cat/dog sustituye cat por dog del
+			del archivo ftu.txt
+		-e guion a ejecutar por ejemplo: sed -n -e '1'p -e '10'p -e '$'p /etc/passwd, esto imprime la 1 la 10 y la last
+	
+	
+	
+	less para ver mejor la salida estandar
+	
+	head revisar por la cabeza del archivo 10 lineas
+	
+	tail empieza por el final 10 lineas
+
+redireccion
+	> esto no agrega al final del archivo se carga todo lo que hay en el interior 
+	>> conserva lo de dentro
+	| pasa la salida de un comando a otro
+	< dirige el contenido del archivo a un comando
+
+compresion de archivos
+	gzip ftu.txt comprime el archivo ftu.txt a ftu.txt.gz
+	
+	zcat ver contenido del archivo xz
+	
+	xzcat ver contenido de archivos comprimidos con xz
+	
+	bzcat ver contenido de archivos comprimidos con bzip2
+
+	
+	
+comprobacion de archivos
+
+sha256sum
+	sha256sum ftu.txt genera el hash si le agregamos ">" sha256.txt lo redirecciona al arcchivo
+	-c sha256.txt para comprobar la integridad del archivo
+	
+sha512sum
+
+md5sum
+
+-----------------------------------103.3 admiistracion basica de archivos------------------------------------------------
+comandos:
+	cp copiar archivos
+		-r o -R o --recursive copia recursiva
+	
+	find buscar archivos
+			-name
+			-type f busca archivos
+			-type d busca directorios
+			-type L busca enlaces simbolicos
+			-iname no distingue minisculas
+			-not devuelve los resultados que no coinciden con el caso de prueba
+			-maxdepth N busca directorio actual y en los subdirectorios N de profundidad
+			-mtime 7 busca por hora de modificacion de los ultimos 7 dias
+			-exec ejecuta un comando
+			-delete elimina los resultados
+			-size localiza por tomaño
+				-size 100b archivos de exactamente 100 bytes.
+				-size +100k	archivos de más de 100 kilobytes.
+				-size -20M archivos de menos de 20 megabytes.
+				-size +2G archivos de más de 2 gigabytes.
+				Para encontrar archivos vacíos podemos usar: find . -size 0b o find . -empty.
+				
+			-print0 le indica a find que use un caracter nulo entre cada entrada
+				
+	mkdir crear directorios
+		-p crea un camino
+	
+	mv mover y renombrar 
+		-i solicita informacion
+		-f forzado
+	
+	ls listar 
+		-l lista larga mas detalle
+		-d directorios
+		-c archivos especiales
+		-h formato legible para humanos
+		-a mostrar ocultos
+		-R recursivo directorio junto con sus subdirectorios
+	
+	rm eliminar archivos
+		-i interactivo
+		-f forzado
+		-r recursivo se carga todo
+	
+	rmdir borra directorios SOLO SI ESTAN VACIOS
+		-p para seguir un camino borrando
+	
+	touch crear archivos 
+		-m cambia la hora de modificacion
+		-a cambia la hora de acceso		
+	
+	tar crear archivor tar y modificarlos  SOLO EMPAQUETA
+		--create o -c crea un nuevo archivo tar
+		--extrac o -x extrae el archivo uno o mas archivos de un archivo tar
+		--list o -t muestra una lista de los archivos incluidos en el archivo
+		--verbose o -v proceso del comando tar
+		--file=archive-name o -f archive-name especifica el nombre del archivo de almacenamiento
+		-z gzip usa
+		-j para gzip2
+		
+		ejemplo crear un archivo tar llamado stuff en el directorio actual llamandolo archive.tar
+			tar -cvf archive.tar stuff
+			
+		tar -cvf archive.tar stuff1 stuff2 creara el archivo.tar de los archivos stuff1 y stuff2
+		
+		extraer un archivo 
+			tar -xvf archive.tar
+			tar -xvf archive.tar -C /tmp la opcion -C especifica donde se guardara el archivo
+			
+		comprimir con tar y gzip
+			$ tar -czvf name-of-archive.tar.gz stuff
+			
+		extraer con tar y gzip
+			$ tar -xzvf name-of-archive.tar.gz stuff
+	
+	cpio significa copy in copy out se utiliza para procesar archivos de almacenamiento *.cpio o *.tar
+		-o indica que cree una salida, en este caso achive.cpio
+		-id < archive.cpio la opcion -i realiza extracto, la -d creara la carpeta de destino
+		-t muestra una tabla del contenido de la entrada
+	
+	dd copia datos de una ubicacion a otra
+		if input file archivo que se copiara
+		of output file donde se copiara
+		status=progress progreso
+		conv convierte en el proceso de copiar
+			ucase cambia de mayusculas a minisculas
+		bs tamaño de bloque
+	
+	file
+	
+	gzip
+		crea archivos comprimidos con el mismo nombre pero con un final .gz
+		elimina los archivos originales despues de crear el archivo comprimido
+	
+	gunzip 
+	
+	bzip2	 
+		El comando bzip2 funciona de manera similar.
+		Para descomprimir los archivos, usamos gunzip o bunzip2 dependiendo del algoritmo utilizado para
+		comprimir un archivo.
+	
+	bunzip2
+	
+
+	------------------Comodimes en terminal---------------------
+	rm * 
+		elimina todos los archivos del directorio actual
+	
+	ls l? st 
+		lista archivos que comienzan con l seguido de cualquier caracter y terminados en st
+	
+	rm [a-z] * elimina todos los directorios que comienzan por letra
+	
+	
+	------------------tipos de Comodimes en terminal---------------------
+	* (asterisco)
+		una o mas coincidencias
+		
+	? (signo de interrogación)
+		una coincidencia
+		
+	[] (caracteres entre corchetes)
+		cualquier coincidencia entre las corchetes
+		
+
+-----------------------------------103.4 uso de secuencias de texto, tuberias y redireccion-------------------------
+comandos:
+	tee redirecciona la salida de un comando hacia un archivoy al mismo tiempo lo muestra
+	xargs usa los contenidos que recibe atraves de stdin para ejecutar un comando
+		-n le dice cuantos argumentos tendra xargs -n 1 tendra 1 argumento , -n 2 tendra 2 etc
+		-o le indica que puede usar un caracter nulo como separador
+	bc calculos matematicos
+	make compilar un programa
+
+entrada estandar =	/dev/stdin o 0
+salida estandar = 	/dev/stdout o 1
+salida error = 		/dev/stderr 0 2
+
+redireccion
+	> esto no agrega al final del archivo se carga todo lo que hay en el interior 
+	>> conserva lo de dentro
+	| pasa la salida de un comando a otro
+	< dirige el contenido del archivo a un comando
+	<< permite introducir una entrda en linea directamente en el comando 
+		comando <<FIN
+		Línea 1
+		Línea 2
+		FIN
+	<<< permite escribir directamente en la terminal como entrada del comando 
+		comando <<<"cadena"
+		
+	se puede concatenar comandos por ejemplo 
+		mkdir `date +%Y-%m-%d` esto creara un directorio con la fecha actual
+		mkdir $(date +%Y-%m-%d) esto hara lo mismo que el anterior pero sin las comillas inversas
+		
+	El mismo metodo se puede usar para almacenar la salida de un comando en una variable
+		$ OS=`uname -o`
+		$ echo $OS
+		GNU/Linux
+
+Lo siguiente enviara la salida de error stderr o 2 a un archivo llamado error.txt situado en /tmp/error.txt	
+$ cat /proc/cpu_info 2>/tmp/error.txt
+$ cat /tmp/error.txt
+cat: /proc/cpu_info: No such file or directory
+
+Tanto stdout como stderr se redirigen al mismo objetivo con &> o >&.
+Por ejemplo, 1>&2 redirige stdout a stderr. 
+Para hacer lo contrario, de stderr a stdout, se debe usar 2>&1 en su lugar.
+
+
+
+-----------------------------------103.5 crear, supervisar y matar procesos-----------------------------------------
+cada proceso tiene su identificador de proceso unico o PID
+
+comandos:
+	&
+	bg llevarlo a segundo plano
+		para poder interactuar con los procesos %
+		tambien podemos utilizar & para mandarlo a segundo plano
+		
+	fg esto se utiliza para llevar un proceso a primer plano
+		para poder interactuar con los procesos %
+		
+	jobs 
+		-l mostrara tambien el PID
+		-n lista los procesos que han cambiado de estado desde la ultima modificacion. 
+			(Running, Stopped, Terminated o Done)
+		-p lista los IDs de procesos
+		-r lista solo los procesos en ejecucion
+		-s lista solamente los trabajos detenidos o suspendidos	
+	
+	
+	Para conocer los trabajos o procesos que se han iniciado interactivamente, enviados a segundo plano
+		y aun no han sido eliminados o terminados
+		Lanzamos un proceso sleep 60 luego control z y ejecutamos jobs esto dara el siguiente resultado 
+		
+		$ jobs
+		[1]+ Stopped sleep 60
+		
+		[1] este numero es el ID del trabajo o job se puede utilizar para cambiar el estado del proceso, para esto
+		tenemos que utlizar el (%) para poder cambiar el estado median fg, bg y kill
+		
+		+ actual el trabajo actual predeterminado, es decir el ultimo suspendido o enviado a segundo plano.
+			el job anterior esta marcado con un - 
+			
+		Stopped esto describe como se encuentra el job
+		
+		sleep 60 el comando o trabajo en ejecucion
+		
+		%n	Trabajo cuyo número de identificación es n:
+		$ jobs %1		
+		[1]+ Stopped sleep 60
+		
+		%str Trabajo cuya línea de comando comienza con str:
+		$ jobs %sl		
+		[1]+ Stopped sleep 60
+		
+		%?str Trabajo cuya línea de comando contiene str:
+		$ jobs %?le		
+		[1]+ Stopped sleep 60
+		
+		%+ o %%	Trabajo actual (el último que se inició en segundo plano o suspendido del primer plano):
+		$ jobs %+
+		[1]+ Stopped sleep 60
+		
+		%- Trabajo anterior (el que era % + antes del predeterminado, el actual):
+		$ jobs %-
+		[1]+ Stopped sleep 60	
+	
+	
+	kill se utiliza para matar procesos o jobs
+		% para matar el proceso y su identificador de jobs
+		-n n representa el numero de proceso a terminar
+		0 todos los procesos 
+		
+		SIGHUP (1): Esta señal se envía al proceso cuando se cierra la terminal o la conexión del terminal se pierde.
+		 A menudo se utiliza para solicitar que un proceso recargue su configuración.
+
+		SIGINT (2): Esta señal se envía cuando se presiona la combinación de teclas "Ctrl+C" en la terminal. 
+		Se utiliza para solicitar la interrupción suave de un proceso.
+
+		SIGQUIT (3): Esta señal se envía cuando se presiona la combinación de teclas "Ctrl+" en la terminal. 
+		Solicita que un proceso finalice y genere un volcado de núcleo (core dump) para su análisis.
+
+		SIGKILL (9): Esta señal termina un proceso de forma inmediata y forzada.
+		 No permite una finalización ordenada y se utiliza como último recurso cuando un proceso no responde a 
+		 otras señales.
+
+		SIGTERM (15): Esta es la señal predeterminada que se envía cuando no se especifica ninguna señal. 
+		Solicita que un proceso se cierre de forma ordenada y finalice.
+
+		SIGSTOP (19): Esta señal se utiliza para detener temporalmente un proceso. El proceso se suspende y se puede 
+		reanudar más tarde utilizando la señal SIGCONT.
+
+		SIGCONT (18): Esta señal se utiliza para reanudar la ejecución de un proceso que ha sido detenido 
+		previamente con SIGSTOP.
+
+		SIGUSR1 (10) y SIGUSR2 (12): Estas señales son señales definidas por el usuario
+		 que se pueden utilizar para propósitos específicos según las necesidades del sistema o la aplicación.
+		 
+		 Las señales se pueden especificar por:
+			• Nombre:
+			$ kill -SIGHUP 1247
+			
+			• Número:
+			$ kill -1 1247
+			
+			• Opciones:
+			$ kill -s SIGHUP 1247
+			
+		$ kill -1 $(pgrep sleep) esto eliminara todos los procesos sleep, el pid lo proporciona pgrep
+		
+	nohup este comando sirve para que a la hora de cerrar la sesion no muera el proceso "no hangup"
+		la sintaxis es la suguiente nohup comand &, el signo & envia el proceso a segundo plano y deja libre
+		la terminal
+	
+	ps monitoreo de procesos, muestra los resultados estaticamente
+		el comando ps puede aceptar 3 maneras diferentes de expresar una misma accion: BSD, UNIX, GNU
+		
+		BSD
+		Las opciones no siguen ningún guión inicial:
+		$ ps p 811
+		PID TTY STAT TIME COMMAND
+		811 pts/0 S 0:00 -su
+		
+		UNIX
+		Las opciones siguen un guión inicial:
+		$ ps -p 811
+		PID TTY TIME CMD
+		811 pts/0 00:00:00 bash
+		
+		GNU
+		Las opciones van seguidas de guiones dobles iniciales:
+		$ ps --pid 811
+		PID TTY TIME CMD
+		811 pts/0 00:00:00 bash		
+		
+		a:	muestra los procesos de una tty
+		U: procesos de un usuario
+		u: mostrar formato orientado al usuario
+		x: mostrar procesos que no esten conectados a un tty
+		aux: ver todos los procesos en el sistemas usando sintaxis BSD 
+			campos de la opcion
+			user: dueño del proceso
+			pid
+			%cpu
+			%mem
+			vsz: memoria virtual utilizada de proceso
+			rss: memoria fisica no intercambiada utiizada por el proceso en KiB
+			tt: termial que controla el proceso 
+			stat: estado del proceso S, R, Z, 
+				-D suspencion esperando E/S
+				-T detenido normalmente por una señal de control
+				Algunos modificadores adicionales incluyen: 
+					< alta prioridad, no agradable para otros procesos
+					N baja prioridad, agradable para otros procesos
+					+ en el grupo de procesos en primer plano
+			started: hora que comenzo el proceso
+			time: timepo de cpu acumulado
+			command: comando que inicio el proceso
+	
+	
+	top monitoreo de procesos, muestra los resultados dinamicamente 309 
+		opciones:
+		M Ordena por uso de memoria.
+		
+		N Ordena por número de ID.
+		
+		T Ordena por tiempo de ejecución.
+		
+		P Ordena por porcentaje de uso en CPU.
+		
+			TIP Para cambiar entre orden descendente/ascendente, simplemente presione R.
+			Otras teclas interesantes para interactuar con top son:
+			? o h
+			Ayuda.
+			
+		k Mata un proceso. top solicitará que se elimine el PID del proceso y que se envíe la señal (por
+		defecto, SIGTERM o 15).
+		
+		r Cambiar la prioridad de un proceso (renice). top le pedirá el valor nice. Los valores posibles
+		oscilan entre -20 y 19, pero solo el superusuario (root) puede establecerlo en un valor negativo o
+		inferior al actual.
+		
+		u Lista de procesos de un usuario en particular (de forma predeterminada se muestran los procesos
+		de todos los usuarios).
+		
+		c Muestra las rutas absolutas de los programas y diferencia entre procesos de espacio de usuario y
+		procesos de espacio de kernel (entre corchetes).
+		
+		t y m
+		Cambia el aspecto de las lecturas de CPU y memoria respectivamente en un ciclo de cuatro
+		etapas: las dos primeras pulsaciones muestran barras de progreso, la tercera oculta la barra y la
+		cuarta la recupera.
+		
+		W
+		Guardar ajustes de configuración en ~/.toprc.
+		
+		Alternativas a top es htop o atop
+		
+-------Area de resumen se compone de las primeras filas superiores 301 -----------------------------------------
+		• top - 11:10:29 up 2:21, 1 user, load average: 0,11, 0,20, 0,14
+			
+			- hora actual formato 24 horas 11:10:29
+			-tiempo de actividad up 2:21
+			-usuarios conectados 1 user
+			-Promedio de carga CPU durante los ultimos 1, 5 y 15 minutos, load average: 0,11, 0,20, 0,14
+			
+			• Tasks: 73 total, 1 running, 72 sleeping, 0 stopped, 0 zombie 
+				(información sobre procesos)
+				Numero total de procesos activos 73, 1 running, 72 sleeping, detenidos 0 y zombies 0
+				
+			• %Cpu(s): 0,0 us, 0,3 sy, 0,0 ni, 99,7 id, 0,0 wa, 0,0 hi, 0,0 si, 0,0 st 
+				(porcentaje	de tiempo de CPU empleado)
+				0,0 us 		procesos de usuarios
+				0,3 sy 		procesos del kernel
+				0,0 ni 		procesos establecidos en un valor nice
+				99,9 id		tiempo de inactividad de la cpu (cuanto mas cercano al 100% mas cpu libre)
+				0,0 wa		procesos en espera de operaciones E/SI
+				0,0 hi 		procesos que sirven de interrupciones de HW-Perifericos, envia señales para atencion
+				0,0 si		procesos que sirven de interruciones al SW
+				0,0 st		procesos que sirven las tareas a otras MV en V, por lo tanto roban tiempo 
+	
+			• KiB Mem : 1020332 total, 909492 free, 38796 used, 72044 buff/cache
+				(Información de memoria en kilobytes)
+				1020332 total:		monto total de memoria
+				909492 free:		memoria libre
+				38796 used:			memoria usada	
+				72044 buff/cache	memoria intermedia (buffer) en cache para evitar acceso excesivo al disco
+				
+			• KiB Swap: 1046524 total, 1046524 free, 0 used. 873264 avail Mem 
+				(Información memoria swap en kilobytes)
+				1046524 total:		cantidad total de espacio de swap
+				1046524 free:		cantidad total de memoria libre swap
+				0 used:				espacio en uso
+				873264 avail Mem:	cantidad de memoria de intercambio que se puede asignar a los procesos sin
+									causar intercambio
+				
+
+-------Area de resumen se compone de las primeras filas superiores 311 -----------------------------------------
+	Informacion sobre los procesos
+	PID: 		identificador de procesos
+	USER: 		usuario que emitio el comando que genero el proceso
+	PR:			prioridad de proceso en el kernel
+	NI: 		valor nice del proceso. los valores mas bajos tienen mayor prioridad que los mas altos
+	VIRT:		cantidad total de memoria utilizada por el proceso (incluido la swap)
+	RES:		memoria RAM utilizada por el proceso
+	SHR: 		memoria compartida del proceso con otros procesos
+	S:			estado del proceso,
+					-S (suspension interrrumpible -esperando que termine un evento)
+					-R (ejecutable - ya sea en ejecucion o en la cola que se ejecutara)
+					-Z (procesos secundarios terminados en zombies aun no eliminado de la tabla de procesos)
+	%CPU:		Porcentaje de CPU utilizado por el proceso
+	%mem:		procentaje de memoria RAM utilizada por el proceso es valor RES en porcentaje
+	TIME+:		Tiempo total de actividad del proceso
+	command:	nombre del comando/programa que genero el proceso 
+
+	free: mostrar uso de memoria
+	
+	
+	uptime
+	
+	
+	pgrep muestra el PID de un proceso su sintaxis es asi: pgrep sleep dara el pid de los procesos sleep
+			igual a pgrep se puede descubrir el pid mediante el comando pidof
+	
+	
+	pkill mata a un proceso basado en su nombre 
+		$ pkill sleep
+		[1]+ Terminated sleep 60
+	
+	
+	killall mata varias instancias del mismo proceso 
+		$ sleep 60 &
+		[1] 1246
+		$ sleep 70 &
+		[2] 1247
+		$ killall sleep
+		[1]- Terminated sleep 60
+		[2]+ Terminated sleep 70
+	
+	
+	watch
+		ejecuta un programa periodicamente (2s por defecto)
+		-n cambia el intervalo de actualizaciones 
+			ejemplo: watch -n o --interval 5 free esto hara que el comando free se ejecute cada 5 segundos
+	
+	screen
+	
+	
+	tmux
+	
+	pidof busca la identificaion del proceso basada en el nombre
+	
+	
+	sleep lanza un proceso sleep con un numero que es el numero que indica cuanto tiempo estara vivo el proceso
+	
+atajos de teclas
+	crtl + z detiene un proceso
+	
+	
+	
+
+----------------------------------------103.5 leccion 2 crear monitorear y matar procesos 329------------------------------------
+Un miltiplexor o mux dispositivo que permite conectar multiples entradas a una salida 
+
+GNU Screen 331
+
+Ventanas se invoca con screen en la terminal
+	prefijo de comando crl + a c para crear una ventana nueva
+	crt+a w para mostrar las ventanas abajo un asterisco * representa la ventana actual de trabajo
+	crt+a A setea un nombre a la ventana de la terminal o screen +t nombre
+	crt+a num va a la ventana con ese numero
+	crt+a " lista las ventanas, puedes moverte y seleccionar la ventana
+	crt+a k para terminar una ventana
+	
+	regiones de screen, screen se puede poner en vertical u horizontal divide la pantalla
+	crt+a S horizontal
+	crt+a | vertical 
+	crt+a Tab para moverte de una a otra region 
+	crt+a Q para terminar todas las regiones exepto la actual
+	crt+a X termina la region actual
+	screen -S 1037 -X quit para matar una sesion
+	terminar una region no termina su ventana asociada
+	
+	screen -list ver las sesiones 
+	screen -S " " crea una nueva sesion con el nombre indicado
+	
+	crt+a d desconecta la sesion y vuelve a la terminal
+	screen -r para volver a conectar a la sesion screen -r sesion-PID para volver a la sesion con el pid
+	las opciones mas importantes para volver a conectar son las siguientes:
+	
+		-d -m
+		Inicie screen en modo independiente. Esto crea una nueva sesión pero no se vincula a ella. Esto es
+		útil para los scripts de inicio del sistema.
+		
+		-D -m
+		Igual que -d -m, pero no bifurca un nuevo proceso. El comando sale si la sesión termina.
+		
+		-d -r
+		Vuelva a conectar una sesión y, si es necesario, desconéctela primero.
+		
+		-d -R
+		Igual que -d -r pero screen incluso creará la sesión primero si no existe.
+		
+		-d -RR
+		Igual que -d -R. Sin embargo, utilice la primera sesión si hay más de una disponible.
+		
+		-D -r
+		Vuelva a conectar una sesión. Si es necesario, desconecte y cierre la sesión de forma remota
+		primero.
+		
+		-D -R
+		Si se está ejecutando una sesión, vuelva a conectarla (desconecte y cierre la sesión de forma
+		remota primero si es necesario). Si no se estaba ejecutando créelo y notifique al usuario.
+		
+		-D -RR
+		Lo mismo que -D -R - solo que más fuerte.
+		
+		
+	Copiar y pegar modo scrollback
+	
+	
+Alternativas a screen tmux
+tmux abre tmux, tmux new -s "lpi" -n "window zero" crea una sesion lpi y una ventana windows zero
+	crt+b c crear una ventana
+	crt+b , renombra la ventana
+	crt-b w para listar las ventanas de la sesion 
+	crt-b n siguiente ventana
+	crt-b p ventana anterior
+	crt-b num numero de ventana
+	crt-b & matar una ventana
+	crt-b f buscar ventana por nombre
+	crt-b . cambiar el numero de indice de la vantana
+	crt+b s cambiar de sesion
+	crt+b $ renombrar sesion
+	crt+b :new nueva sesion
+	tmux kill-session -t "Second Session" para matar una sesion por nombre
+	tmux a volver a entrar a la sesion
+	tmux attach -t 0 atacar a la sesion 0
+	crt+b d volver a la terminal
+	tmux rename-session -t 0 git renombra la sesion como git
+	Ctrl + b - D seleccione qué cliente desvincular.
+	Ctrl + b - r Actualizar la terminal del cliente.
+
+Panales de vantana es igual a regiones de screen
+	crt-b " divider horizantal la ventana
+	crt-b % divider verticalmente la ventana
+	crt-b x matar el panel con todo dentro se pide confirmacion 
+	
+	Ctrl + b - ↑ , ↓ , ← , →
+	moverse entre paneles.
+	
+	Ctrl + b - ;
+	pasar al último panel activo.
+	
+	Ctrl + b - Ctrl + arrow key
+	cambiar el tamaño del panel en una línea.
+	
+	Ctrl + b - Alt + arrow key
+	cambiar el tamaño del panel en cinco líneas.
+	
+	Ctrl + b - {
+	intercambiar paneles (actual a anterior).
+	
+	Ctrl + b - }
+	intercambiar paneles (actual a siguiente).
+	
+	Ctrl + b - z
+	panel de acercar/alejar.
+	
+	Ctrl + b - t
+	tmux muestra un reloj elegante dentro del panel (deténgalo presionando q).
+	
+	Ctrl + b - !
+	convertir el panel en ventana.
+	
+	Para listar sesiones en tmux crt+b s 
+	
+	para listar de fuera de tmux tmux ls 
+	
+	
+	
+	
+----------------------------------------103.6 modificar prioridad de procesos en ejecucion------------------------
+comandos:
+	nice
+		nice -n 15 tar czf home_backup.tar.gz /home crea el proceso con una prioridad de 15 nice
+	ps muestra los procesos a modo de snapshot
+		-Al -el para ver todos los procesos ene ejecucion
+	renice se utiliza para cambiar la prioridad de un proceso en ejecucion
+		-p indica el numero PID del proceso, ejemplo renice -10 -p 2164
+		-g modificar procesos de un grupo en especifico renice +5 -g grup
+		-u modificar procesos de un usuario en especifico renice +u user
+	top
+	
+la prioridad estandar de los procesos es 120, se puede reducir a 100 o aumentar a 139 	
+el pid 1 es init o systemd
+	las prioridad mostradas por ps varian de -40 a 99 por defecto, la prioridad real se optiene sumando 40
+	la prioridad mostrada por top al igual que ps tambien muestra el valor de prioridad es diferente. resta 100
+	top va de 0 a 39
+	
+Todo proceso inicia con una prioridad predeterminada de 0, se puede modificar con el comando nice, por defecto 10
+
+	
+	
+
+
+	
+----------------------------------------103.7 Busqueda en archivos expresiones regulares 373----------------------
+comandos:
+	grep
+	egrep
+	fgrep
+	sed
+	regex
+
+algunos de los comodines para expresiones regulares:
+	.(punto) 			coincide con cualquier caracter
+	^(intercalacion)	coincide con el inicio de una linea
+	$(dolar)			coincide con elfinal de una linea
+	
+expresiones de corchetes
+	[:alnum:] representa un caracter alfanumerico
+	[:alpha:] representa un caracter alfanumerico
+	[:ascii:] representa un caracter que encaja en el juego de caractes ascii
+	[:blank:] representa un caracter en blanco, espacio otabulacion
+	[:cntrl:] representa un caracter de control
+	[:digit:] representa un digito del 0 a 9
+	[:graph:] representa cualquier caracter imprimible exepto el espacio
+	[:lower:] representa un caracter en minuscula
+	[:print:] representa cualquier caracter imprimible incluido el espacio
+	[:punct:] representa cualquier caracter imprimeble que no sea un espacio ni un alfanumerico
+	[:space:] representa espacio en blanco, avance de formulario (\f), new line (\n), retorno (\r), tab (\t) y (\v)
+	[:upper:] representa una letra mayuscula
+	[:xdigit:] representa digitos hexadecimales (de 0 a F)
+	
+limites de las expreciones:
+	{i} el resultado debe aparecer exactamente i veces entero. eje, [[:bank:]]{2}
+		coincide con exactamente dos caracteres en blanco
+		
+	{i,} resultado debe aparecer i veces, [[:bank:]]{2,}, coincide con cualquier secuencia de dos o mas caracteres
+	
+	{i,j} resultado debe aparecer al menos i vecces y como maximo j veces
+	
+ejemplos de busqueda con expresiones regulares
+
+	find $HOME -regex '.*/\..*' -size +100M 
+	busca archivos de mas 100M pero solo en rutas dentro del directorio de inicio (home) que contienen una 
+	coindicencia con .*/\..* es decir un /. rodeado por cualquier otro numero de caracter. solo archivos ocultos
+	-iregex no distinguir entra mayusculas y minusculas
+	
+
+	find /usr/share/fonts -regextype posix-extended -iregex '.*(dejavu|liberation).*sans.*(italic|oblique).*'
+	
+	
+	
+	
+	
+-------------------Parte 2 385----------------------------------------------------------------------------------
+grep buscador de patrones
+	fdisk -l | grep '^Disk /dev/sd[ab]'
+	
+	grep '^options' /etc/modprobe.d/alsa-base.conf
+	
+	fdisk -l | grep '^Disk /dev/sd[ab]' -c la opcion -c le dice a grep que cuente las lineas coincidentes
+	
+	$ find /usr/share/doc -type f -exec grep -i '3d modeling' "{}" \; | cut -c -100
+		En este ejemplo, find lista todos los archivos en /usr/share/doc y luego pasa cada uno a grep, que a
+		su vez realiza una búsqueda que no distingue entre mayúsculas y minúsculas de 3d modeling dentro
+		del archivo. La tubería (pipe) está ahí sólo para limitar la longitud de salida a 100 columnas. Sin
+		embargo, tenga en cuenta que no hay forma de saber de qué archivo provienen las líneas. Este
+		problema se resuelve agregando -H a grep
+		
+	$ find /usr/share/doc -type f -exec grep -i -H '3d modeling' "{}" \; | cut -c -100
+	
+	algunas opciones del comando grep
+		-c o --count cuenta cuantas coincidencias hay
+		-i o --ignore-case no distingue entre minusculas y mayusculas
+		-f o --file=archivo indica un archivo que contenga la expresion regular a utilizar
+		-n o --line-numbre muestra el numero de linea 
+		-v o --invert-match selecciona todas las lineas, exepto las coincidencias
+		-v selecciona sola las lineas que coinciden 
+		-H o --with-filename imprime el nombre del archivo que contiene la linea
+		-z o --null-data toma la entrada o salida como una secuencia de lineas
+		-1 le indica a grep que incluya una linea antes y despues del resultado
+		find '/<body>/,/<\/body>/p' la p ultima imprime las coindicencias 
+		
+	el comando fgrep es igual a grep -F
+	
+sed editor de flujo, el proposito de sed es modificar datos basados en texto de una manera no interactiva.
+	es adecuado para transmitir texto a traves de tuberias, sed -f SCRIP, sed -e COMMAND
+	
+	$ factor `seq 12` | sed 1d elimina la primera linea 
+	
+	$ factor `seq 12` | sed 1,7d rango de lineas a eliminar
+	
+	$ factor `seq 12` | sed 1d "1,7d;11d" mas de una instruccion, elimina del 1 al 7 y la linea 11
+	
+	$ factor `seq 12` | sed "1d;/:.*2.*/d" elimina la primera linea, despues una expresion regular que elimina 
+		las lineas que acaban con 2
+		
+	factor `seq 12` | sed "1d;/:.*2.*/c REMOVED" elimina la primera linea, cambia las que terminan con 2 a REMOVED
+	
+	s/FIND/REPLACE la expresion mas utilizada el  busca y sustituye pero solo en la primera linea
+	find s/FIND/REPLACE/g sustituye globalmente
+	
+	
+comandos interesantes:
+	last lista los usuarios accedidos al sistema de mas viejo a mas nuevo
+	lastb lista los accesos de usuarios que accedieron y salieron desde que se creo el archivo /var/log/wtmp
+		-d traduce la ip al nombre del host
+		-a coloca el nombre de host en la ultima columna 
+		--time-format notime suprime la hora en que se produjo el intento de inicio de sesion
+		-n limita las entradas 
+	
+	
+	
+	
+	
+----------------------------------------103.8 edicion basica de archivos pag 404 ------------------------
+Lista parcial de archivos, términos y utilidades
+• vi
+• /, ?
+• h, j, k, l
+• i, o, a
+• d, p, y, dd, yy
+• ZZ, :w!, :q!
+• EDITOR variable para editar texto, export EDITOR=nano define nano en la shell actual, ~/.bash_profile
+
+	
+	opciones de vi 
+		0, $ Ve al principio y al final de la línea.
+		1G, G Vaya al principio y al final del documento.
+		(, ) Vaya al principio y al final de la oración.
+		{, } Vaya al principio y al final del párrafo.
+		w, W Saltar palabra y saltar palabra, incluida la puntuación.
+		h, j, k, l Izquierda, abajo, arriba, derecha.
+		e o E Ir al final de la palabra actual.
+		/, ? Busca hacia adelante y hacia atrás.
+		i, I modo de inserción antes de la posición actual del cursor y al comienzo de la línea actual.
+		a, A Ingrese al modo de inserción después de la posición actual del cursor y al final de la línea actual.
+		o, O Agregue una nueva línea e ingrese al modo de inserción en la línea siguiente o anterior.
+		s, S Borre el carácter debajo del cursor o toda la línea e ingrese al modo de inserción.
+		c Cambie el (los) carácter (es) debajo del cursor.
+		r Reemplaza el carácter debajo del cursor.
+		x Elimina los caracteres seleccionados o el carácter debajo del cursor.
+		v, V Inicie una nueva selección con el carácter actual o la línea completa.
+		y, yy Copia (tira) los caracteres o la línea completa.
+		LPIC-1 (101) (Versión 5.0) | 103.8 Edición básica de archivos
+		p, P Pega el contenido copiado, antes o después de la posición actual.
+		u Deshace la última acción.
+		Ctrl-R Rehace la última acción.
+		ZZ Cerrar y guardar.
+		ZQ Cerrar y no guardar.
+	
+	comandos en vi:
+		para volver al modo normal :visual y presionamos enter
+		:s/Regex/text/g reemplaza regex por text en la linea actual 
+		:! ejecutar el comando de shell especifico a continuacion
+		:quit o :q salir
+		:quit! o :q! salir sin guardar
+		:wq guardar y salir
+		:exit o :x o :e guardar y salir, si es necesario 
+		
+		
+	Alternativas a vi:
+		nano, emacs 
+		
+	
+	
+-----------------------104 Dispositivos, file system y estandar de jerarquia de archivos pag 418-----------
+Administrar particiones MBR y GPT
+Usar diversos comandos mkfs para crear distintos sistemas de archivos tales como:
+	-ext2/ext3/ext4
+	-xfs
+	-vfat
+	-exfat
+lista parcial de archivos, terminos y utilidades
+	-fdisk
+	-gdisk
+	-parted
+	-mkfs
+	-mkswap
+	
+-----------------------104.1 creacion de particiones y sistemas de archivos ----------------------------------
+comandos:
+	fdisk comando para particionar un disco, se abrira un menu en el cual podemos elegir las opciones.
+		p imprime la tabla de particiones
+		n nueva particion
+			podemos especificar el tamaño por ejemplo +1G,+1M,+1T o +1P
+		m imprime un menu 
+		d elimina una particion
+		l lista formatos conocidos
+		t cambia el tipo de particion 
+		
+	gdisk este comando se utiliza para sitemas con particiones GPT es casi lo mismo que fdisk
+		n nueva particion 
+		d elimina particiones 
+		s ordena las particiones para optimizar el espacio 
+		r funciones para recuperar una particion
+		
+	
+	parted hay muchas interfaces para trabajar con parted, pero nos centraremos a travez de linea de comandos
+		print ver informacion acerca de la particion seleccionada
+			devices 	ver los dispositivos de bloque conectados al sistema 
+			all			informacion sobre los dispositivos conectados a la vez
+			free		espacio libre hay en cada uno
+			mklabel msdos	crea una tabla de particiones msdos
+			mklabel gpt		crea tabla de particiones gpt 
+		mkpart PARTTYPE=tipo de particion FSTYPE=sistema de archivos en la particion START END
+		
+			Pasos a seguir para particionar con parted:
+				(parted) mkpart
+				¿Tipo de partición?  primary/primaria/extended/extendida? primary
+				¿Tipo de sistema de ficheros?  [ext2]? ext4
+				¿Inicio? 1
+				¿Fin? 1024
+
+	
+	mkfs sirve para crear sistemas de archivos
+		mkfs.ext1[2,3 o 4] /dev/sdb1 
+		mke2fs -t ext4 /dev/sdb1 esto hara los mismo que el comando anterior
+		mkfs.xfs /dev/sda 
+		mkfs.fat /dev/sda
+		mkfs.exfat /dev/sda
+		mkfs.btrfs /dev/sda
+			mkfs.btrfs /dev/sdb1 -L "New Disk"
+			mkfs.btrfs -d single -m single /dev/sdb /dev/sdc
+			nuevo sistema de archivo btrfs 
+			crear subvolumenes 
+				btrfs subvolume create /mnt/disk/BKP
+				btrfs subvolume show /mnt/disk/BKP/ comprobar el subvolumen
+				mount -t btrfs -o subvol=BKP /dev/sdb1 /mnt/bkp montar el subvolumen
+				# btrfs subvolume snapshot /mnt/disk /mnt/disk/snap crear una instantanea
+				# btrfs subvolume snapshot -r /mnt/disk /mnt/disk/snap instantea solo lectura
+			
+	mke2fs
+		-b SIZE establece el tamaño de los loques de datos en el dispositivo SIZE, 1024, 2048 o 4096 por bloque
+		-c compruba el dispositivo de destino en busca de bloques defectuosos.
+			para una comprobacion mas lenta pero mos extensa mkfe.ext4 -c -c TARGET
+		-d copia el contenido del directorio especificaco en la raiz del nuevo sistema de archivo
+		-F !MUY MUY PELILOSO! fuerza a montar un sistema de archivo aunque este mal un opcion
+		-L Volume_label etiqueta de volumen, el nombre sera Volume_label, maximo 16 caracteres 
+		-n "un modo de prueba"
+		-q modo silencioso. no produce salida 
+		-U ID establece el UUID de una particion en el valor especifico como ID
+		-V modo detallado 
+		
+	mkswap	configurar memoria de intercambio swap primero hay que darle formato swap con fdisk o gdisk 
+		mkswap /dev/sdb1
+		swapon /dev/sdb1 para habilitarla como swap
+		swapoff /dev/sdb1 para desahilitarla
+		
+		Tambien podemos habilitar un archivo como swap.
+			$ dd if=/dev/zero of=myswap bs=1M count=1024 esto creara un archivo de 1G llamado myswap
+			mkswap myswap le decimos al sistema que sera de tipo swap
+			swapon myswap lo habilitamos
+			
+		
+	
+un S.O considera cada particion como un disco andes de poder usarlo, Windows C: en linux se asigna a un directorio
+como por ejemplo /dev/sda1 o /dev/sda2
+
+MBR particiones de esquema estandar, normalmente utilizado para sistemas virutalizados, la tabla de particiones 
+se almacena en el primer sector del disco, llamado Boot Sector, junto con el cargador de arranque (GRUB).
+este sistema tiene limitaciones como solo 4 particiones primarias y no puede utilizar discos de mas de 2 TB
+
+GUID soluciona los problemas del MBR, no existe un limite practico en el tamaño del disco y particiones, esto 
+solo esta limitado por el propio sistema operativo, se encuentra en maquinas modernas que utilizan UEFI	
+
+fdisk /dev/sda 
+luego presionamos p y nos mostrara este menu 
+	Command (m for help): p
+	Disk /dev/sda: 111.8 GiB, 120034123776 bytes, 234441648 sectors
+	Disk model: CT120BX500SSD1
+	Units: sectors of 1 * 512 = 512 bytes
+	Sector size (logical/physical): 512 bytes / 512 bytes
+	I/O size (minimum/optimal): 512 bytes / 512 bytes
+	Disklabel type: dos
+	Disk identifier: 0x97f8fef5
+	Device Boot Start End Sectors Size Id Type
+	/dev/sda1 4096 226048942 226044847 107.8G 83 Linux
+	/dev/sda2 226048944 234437550 8388607 4G 82 Linux swap / Solaris
+	
+	Device:		Dispositivo asignado a la particion 
+	Boot:		Muestra si la particion es "de arranque" o no
+	start:		el sector donde comienza la particion
+	end:		el sector donde acaba la particion 
+	sectors:	el numero total de sector en la particion.
+	size:		tamaño de la particion en formato humano 
+	id:			el varlor numerico que representa el tipo de particion
+	type:		la descripcion de la particion 
+	
+	
+echo "- - -" > /sys/class/scsi_host/host0/scan este comando para añadir disco en caliente
+cat /proc/scsi/scsi ver la controladora
+
+	
+	
+	
+	
+	
+-----------------------104.2 Mantener la integridad de los sistemas de archivos 454----------------------------------
+comandos:
+	du: ver cuanto uso de disco  por el direcotiro actual y subdirectorios (disk usage)
+		-h formato humano
+		-a muestra recuento individual de todos los archivos en el directorio
+		-S excluye subdirectorios
+		-c recuento total
+		-d niveles del comando, -d 1 mostrara el directorio actual y subdirectorios pero no ira mas adelante
+		--exclude="PATTERN" excluye patern del recuento
+		
+	df: uso del disco y la cantidad de espacio disponible a nivel del sistema de archivo (disk free) 
+		-h formato humano
+		-i inodo en lugar de bloques 
+		-T tipo de archivo 
+		-x tmpfs excluye el sistema de archivo tmpfs
+		-t ext4 muestra solo los sistemas de archivos ext4
+		--output=size solo muestra la salida del tamaño de los archivos
+			algunos de los campos que se pueden seleccionar con output son:
+				-source: 	el dispositivo correspondiente al sistema de ficheros
+				-fstype: 	el tipo de sistemas de archivos
+				-size: 		el tamaño total del sistema de archivos
+				-used: 		cuanto espacio se esta utilizando
+				-avail:		cuanto espacio disponible
+				-pcent:		porcentaje de uso
+				-target:	donde esta montado el sistema de archivos (punto de montaje)
+				-itotal:	numero total de inodos en el sistema de archivos
+				-iused:		numero de inodos usados en el sistema de archivos
+				-iavail:	numero de inodos disponibles en el sistema de archivos
+				-ipcent:	porcentaje de inodos usados en el sistema de archivos
+				df -h --output=target,source,fstype,pcent,iused,ipcent
+	
+	fsck sirve para comprobar sistemas de archivos, errores (y con suerte corregirlos) filesystem check
+		NO UTILIZARLO EN UN SISTEMA DE ARCHIVOS MONTADOS, PERDIDA DE DATOS
+		No comprueba nada por el solo, llama a utilidad apropiada
+		fsck /dev/sdb1 esto llamara a e2fsck 
+		-t para especificar el sistema de archivos fsck -t vfat /dev/sdc 
+		fsck.msdos /dev/sdc lo mismo que el de arriba pero llamando a la utilidad directamente 
+		-A comprobara todos los sistemas de archivos listados en /etc/fstab
+		-C barra de progreso al comprobar un sistema de archivos, actualmente solo funciona en ext2/3/4
+		-N imprime lo que se haria y saldra, sin realmente verificar el sistema de archivo 
+		-R cuando se ejecuta junto con -A, omitira la verificacion del sistema de archivos raiz
+		-V modo detallado
+		
+		POR defecto al ejecutar el comando si encuentra algun problema con fsck.ext2, fsck.ext3 y fsck.ext4
+		se detendra y pregunta al usuario que hacer, para evitar esto e2fsck hay estas opciones:
+			-p intentara corregir automaticamente cualquier error encontrado, si reuiere intervencion avisa y sale
+			-y responde a todo que si
+			-n lo contrario responde a todo no, esto se montara como solo lectura
+			-f obliga a e2fsck a comprobar un sistema de archivos incluso si esta marcado como "clean"
+	e2fsck
+	
+	mke2fs
+	
+	tune2fs permite ajustar, modificar los parametros de los sistemas de archivos ext2,3 y 4
+		los sistemas de archivos tienen conteos de montaje, el recuento aumenta en 1 cada vez que se monta,
+		cuando alcance un valor de umbral el sistema comprobara automaticamente con e2fsck el proximo arranque 
+		-l /dev/sdb1 
+		-c N maximo de numero que se monta sin comprobarlo
+		-C N establece el numero de veces que se ha montado el sistema en el valor N
+		-i intervalo de tiempo entre comprobaciones, d, m, y 
+			-i 10d comprueba el sistema de archivo en el proximo reinicio cada 10 dias, cero para desactivar opcion
+		-L etiqueta en el sistema de archivo 
+		-U establece el UUID para el sistema de archivo 
+		-e BEHAVIOUR define el comportamiento del kernel cuando se encuentra un error en el sistema de archivos 
+			continue: 		continuara la ejecucion (predeterminado)
+			remount-ro:		montara el sistema de archivos solo lectura 
+			panic:			causara kernel panic			
+		-j agregar journal, por ejemplo convertir ext2 a ext3 
+		-J establecer parametros del journal 
+			size: 		tamaño del journal
+			location:	especificar donde el journal debe almacenarse 
+			-J size=10,location=100M,device=/dev/sdb1 puede pasar varios parametros separados por coma 
+		-f force obliga a completa una operacion, "CUIDADO MAKAKO"
+		
+		tune2fs -l /dev/sdb1 | grep "Reserved block count"
+
+		
+	xfs_repair comando para el mantenimiento del sistema de archivos XFS, equivalente a fsck
+		-n para hacer un escaner en busca de daño # xfs_repair -n /dev/sdb1
+			para hacer la reparacion ejecutamos el comando sin el parametro -n 
+		-l LOGDEV y -r RTDEV
+			si el sistema de archivos tiene un registro externo y secciones en tiempo real, reemplazar LOGDEV y RTDEV
+			con los dispositivos correspondiente 
+		-m N limitar el uso de memoria ram de xfs_repair a N megabytes, ya que si no se especifica el comando 
+			escalara el uso de la memoria hasta el 75% de la ram fisica del sistema
+		-d modo "dangerous" permite la reparacion de sistemas de archivos que esten montados como solo lectura
+		-v imprimer detalle 
+		
+		este comando no puede reparar archivos con un registro "sucio" para ponerlo a cero parametro -L
+		
+		Otra utilidad es xfs_fsr que se puede utilizar para reorganizar ("desfragmentar") un sistema de archivo
+		
+	
+
+-----------------------104.3 comtrolar el montaje y desmontaje de los file system 488------------------------------
+comandos:
+	mount -t TYPE DEVICE MOUNTPOINT comando para montar la particion en el sistema de achivos 
+	# mount -t exfat /dev/sdb1 ~/flash/
+		type: sistema de archivos que se esta montando
+		device: nombre de la particion que contiene el sistema de archivos /dev/sda1
+		mountpoint: donde se montara el sistema de archivos 
+		
+		si tecleamos mount obtendremos una lista de todos los sistemas de archivos actualmente montados
+		mount -t ext4 lista de solo sistemas de archivos ext4 
+		mount -t ext4,fuseblk para obtener varios sistemas de archivos 
+		
+		-a montara todos los sistemas de archivos del archivo de configuracion /etc/fstab
+		-o --options lista de opciones de montaje separadas por comas al comando de montaje 
+		-r o -ro montara el sistema de archivos como solo lectura 
+		-w o -rw esto hara que el sistema de archivos de montaje sea de escritura 
+		
+		# Es buena practica montar los sistemas de archivos en /mnt
+			algunos dispositivos tienen su carpeta como por ejemplo /media , usb, lectores de tarje...
+		
+	umount desmontar el sistema de archivos 
+		-a desmontar todos los sistemas de archivos en /etc/fstab 
+		-f forzara el desmontaje de un sistema de archivos
+		-r si el sistema de archivos no se puede desmontar esto intetara convertirlo en solo lectura 
+	
+	lsof lista que usuarios y procesos estan siendo montados en el siste de archivos 
+	
+
+#########	Archivo de configuracion /etc/fstab ##############
+El archivo /etc/fstab contiene descripciones sobre los sistemas de archivos que se pueden montar.
+Este es un archivo de texto, donde cada línea describe un sistema de archivos que se va a montar, con
+seis campos por línea en el siguiente orden:
+	FILESYSTEM MOUNTPOINT TYPE OPTIONS DUMP PASS
+	/dev/sda1 / ext4 noatime,errors
+	
+	FILESYSTEM: dispositivo que contiene el sistema de archivos que se va a montar, puede ser un  UUID
+	MOUNTPOINT: donde se montara el sistema de archivos
+	TYPE: el tipo de sistema de archivos 
+	OPTIONS: opciones de montaje
+		atime y noatime: desabilitar la informacion de timepo de acceso, acelera la E/S del disco
+		defaults: esto pasara las opciones rw,suid,dev,exec,auto,nouser y async a mount 
+		dev y nodev: permite que los usuarios puedan interactuar con dispositivos en el sistema de archivos 
+		exec y noexec: permite o deniega ejecutar binarios en el sistema de archivos 
+		user y nouser: permite o no a un usario normal montar el sistema de archivos 
+		group: permite montar el sistema si pertenece al mismo grupo que posee el dispositivo que lo contiene
+		owner: permite a un usuario montar un sistema de archivos si el usuario posee el dispositivo que lo contiene
+		suid y nosuid: permite o no que los bits setuid y setgid surtan efecto
+		ro y rw: lectura o lectura+escritura en el sistema de archivo 
+		remount: volver a montar el sistema de archivos, podemos cambiar los parametros 
+					mount -o remount,ro /dev/sdb1
+		sync y async: realizar todas las opciones de E/S en el sistema de archivos de forma sincronica o asincronica
+						esto puede acortar la vida util del dispositivo.
+	DUMP: indica si cualquier sistema de archivos ext2,3,4 debe considerarce, generalmente el 0, se ignora 
+	PASS: cuando es distinto de cero, define el orden en el que se comprobara los file system en arranque, 
+			cero normalmente 
+	
+	lsblk:	consultar informacion sobre un sistema de archivos
+			-f para consulta mas amplia, uuid, label ...
+				$ lsblk -f /dev/sda1
+					NAME FSTYPE LABEL UUID 									FSAVAIL FSUSE% MOUNTPOINT
+					sda1 ext4         6e2c12e3-472d-4bac-a257-c49ac07f3761  64,9G    33% 		/
+					
+					-NAME:		nombre del dispositivo
+					-FSTYPE:	tipo de sistema de archivos
+					-LABEL:		etiqueta del sistema de archivos 
+					UUID:		identificador universal del sistema de archivos 
+					FSAVAIL:	cuanto espacio hay disponible en el sistema de archivos 
+					FSUSE%:		Porcentaje de uso del sistema de archivos 
+					MOUNTPOINT:	Punto de montaje del sistema de archivos 
+					
+	En /etc/fstab se puede especificar por UUID UUID=[ID] o con una label LABEL=[] 
+	Montado normalmente:	/dev/sda1 / ext4 noatime,errors
+	Montado con UUID:		UUID=6e2c12e3-472d-4bac-a257-c49ac07f3761 / ext4 noatime,errors
+	montado con label:		LABEL=homedisk /home ext4 defaults
+	
+	Para hacer lo mismo con el comando mount:
+		mount -t ntfs UUID=56C11DCC5D2E1334 /mnt/external
+		
+		
+############ Montaje de discos con systemd pag 486##########################
+Systemd es el init del sistema, primer proceso que arranca en muchas distribuciones de linux.
+Para utilizar esta funcion de systemd, crear un archivo de configuracion llamado mount unit.
+Cada volumen tiene su propia unidad de montaje y es necesario colocarlos en /etc/systemd/system/. cada unidad tiene
+la extension .mount y su sintaxis es la siguiente: 
+		[Unit]
+		Description= Descripcion de la unidad de montaje
+		
+		[Mount]
+		What= que se debe montar, se debe especificar como /dev/disk/by-uuid/VOL_UUID 
+		Where= ruta completa hacia donde se debe montar el volumen 
+		Type= tipo de sistema de ficheros 
+		Options= opciones de montaje que desee pasar, son las mismas que se utilizan con mount o en /etc/fstab 
+		
+		[Install]
+		WantedBy= gestion de dependencias. en este caso usaremos multi-user.target, si se inicia en un entorno
+					multiusuario se montara la unidad 
+					
+		[Unit]
+		Description=External data disk
+		
+		[Mount]
+		What=/dev/disk/by-uuid/56C11DCC5D2E1334
+		Where=/mnt/external
+		Type=ntfs
+		Options=defaults
+		
+		[Install]
+		WantedBy=multi-user.target
+		
+		Para que esto funcione correctamente, la unidad de montaje debe tener el mismo nombre que el punto de montaje
+		En este caso, el punto de montaje /mnt/external, por lo que el archivo se llamara mnt-external.mount 
+		Despues de esto reiniciamos el servicio.
+		
+		# systemctl daemon-reload
+		# systemctl start mnt-external.mount
+		# systemctl start mnt-external.mount
+		# systemctl enable mnt-external.mount
+	
+############ Montaje automatico de una unidad de montaje 489 ##########################
+Las unidad de montaje se pueden montar automaticamente siempre que se acceda al punto de montaje. 
+Paara esto necesitamos un archivo con extension .automount, junto con el archivo .mount que describe la unidad
+Formato:
+	[Unit]
+	Description= Descripcion de la unidad 
+	
+	[Automount]
+	Where= es el punto de montaje 
+	
+	[Install]
+	WantedBy=multi-user.target
+	
+	# systemctl daemon-reload
+	# systemctl start mnt-external.automount
+	# systemctl enable mnt-external.automount
+	
+
+############ 104.5 Permisos y promietarios de archivos pag 497  ##########################
+comandos
+	chmod 	modificacion de comandos solo root o el propietario del archivo lo puede modificar 
+			se pueden modificar los permisos de 2 maneras formato octal o modo simbolico 
+				$ chmod ug+rw-x,o-rwx text.txt 		formato simbolico 
+					u=usuario
+					g=grupo
+					o=otros 
+					a=all 
+					+ = añade el permisos
+					- = quita permiso 
+					= = setea permisos 
+						por ejemplo 
+							$ chmod a=rw- text.txt, esto seteara los permisos de lectura y escritura para todos 
+					
+				$ chmod 660 text.txt 				formato octal 
+					$ ls -l text.txt
+					-rw-rw---- 1 carol carol 765 Dec 20 21:25 text.txt
+				
+			-R modo recursivo 
+				chmod -R u+rwx Another_Directory/ Este comando se puede leer como: “Recursivamente (-R), 
+				para el usuario (u), otorgar (+) permisos de lectura, escritura y ejecución (rwx)”.
+				
+	umask obtener la mascara por defecto 
+		-S para ver los permisos de manera mas visual 
+		umask u=rwx,g=rwx,o= cambia los permisos en la shell actual 
+			Cada directorio nuevo heredará los permisos rwxrwx---, y cada archivo rw-rw---- (ya que no
+			obtienen permisos de ejecución)
+			
+			
+	
+	chown modificar la propiedad de un archivo o directorio
+		chown USERNAME:GROUPNAME FILENAME
+		
+		$ ls -l text.txt
+		-rw-rw---- 1 carol carol 1881 Dec 10 15:57 text.txt
+		Propietario carol y grupo tambien carol, ahora cambiaremos el grupo del archivo a estudiantes 
+		
+		$ chown carol:students text.txt 
+		$ chown :students text.txt. este comando hace lo mismo 
+		
+		Para cambiar el propietario:
+		$ chown carol: text.txt 
+		$ chown carol text.txt. este comando hace lo mismo
+		
+		#groups carol para ver a que grupo pertenece el usuario carol 
+		# groupmems -g cdrom -l para ve que miembros tiene el grupo cdrom 
+	
+	chgrp cambia el grupo propietario de un archivo o directorio 
+		chgrp nuevogrupo archivo.txt
+		-R nuevogrupo archivo.txt de manera recursiva 
+		chgrp nuevogrupo archivo1.txt archivo2.txt archivo3.txt
+
+	
+	getent se utiliza para obtener informacion sobre bases de datos de nombres y servicios de red.
+		- passwd 	informacion sobre todos los usuarios del sistema 
+		- group 	informacion sobre los grupos del sistema 
+		- hosts  	informacion sobre hosts de red registrados en el sistema, ip nombre 
+		-services	informacion sobre servicios de red definidos en el archivo /etc/services   
+		-shadow 	informacion sobre contraseñas de usuarios 
+		
+	 
+	
+
+si ejecutamos el comando ls -l nos dara una salida parecida a esta
+	$ ls -l
+	total 536
+	drwxrwxr-x 2 carol carol 4096 Dec 10 15:57 Another_Directory
+	-rw------- 1 carol carol 539663 Dec 10 10:43 picture.jpg
+	-rw-rw-r-- 1 carol carol 1881 Dec 10 15:57 text.txt
+	
+	desgranamos el primer resultado
+		d: directorio
+		rwx: 	propietario de archivos tambien conocido como user o u, formato octal 7
+		rwx: 	indica los permisos del grupo propietario del archivo, tambien denominado g, octal 7
+		r-x: 	indican los permisos para cualquier otra persona, tambien conocidos como otros o u, octal 5
+		2:		numero de enlaces duros que tiene el archivo 
+		tercera y cuarta columna:	usuario y grupo 
+		septima y ultima columna: nombre del archivo 
+	
+El primer caracter hace referencia al tipo de archivo:
+		d: directorio
+		-: archivo regular (texto, imagenes ...)
+		l: enlace simbolico 
+		c: dispositivo de caracteres (teclado, mouse, impresora,terminales /dev/ttyS0)
+		s: socket (comunicacion interprocesos de un programa a otro)
+		b: dipositivo de bloque, dispositivo virtual o fisico, generalmente discos u otros tipos de dispositivos 
+		p: pipe o cañeria (comunicacion entre procesos) 
+		
+####################  Permisos ######################
+	r read 		valor 4 
+	w write 	valor 2 
+	x execute 	valor 1
+
+	Para consultar los permisos de un directorio sin listar su contenido ls -ld 
+	
+	Los archivos se crean con los permisos predeterminados 644 
+	los directorios se crean con los permisos predeterminados 755 
+	
+	Esto de debe a la umask que establece los permisos predeterminados para cada archivo creado, 
+	para comprobar la mascara comando umask 
+	
+	Para calcular la umask es una resta por ejemplo si tenemos un archivo con permisos 666 y una umask 0020
+	umask= 666-020=646, ignoramos el primer 0 dado que ese representa permisos especiales que veremos mas adelante 
+	
+	
+####################  Permisos especiales pag 511 ######################
+
+#####Bit adhesivo o sticky bit####### 
+	solo se aplica a directorios y evita la eliminacion o cambio de nombre si 
+	no eres el  propietario del mismo, estos directorios muestran una t en lugar una x en el tramo de others
+		$ ls -ld Sample_Directory/
+		drwxr-xr-t 2 carol carol 4096 Dec 20 18:46 Sample_Directory/
+		
+		Para establecerlo en formato octal:
+			$ chmod 1755 Another_Directory
+			$chmod +t Another_Directory
+			$ ls -ld Another_Directory
+			drwxr-xr-t 2 carol carol 4,0K Dec 20 18:46 Another_Directory
+		
+		
+######################## GIB o SGID ################################# 
+			Este permiso se puede aplicar a directorios o archivos ejecutables, esto hara que cualquiera que 
+			ejecute el documento lo haga como propietario del archivo, se representa con una s en grupo.
+			cuando se aplica a directorios hara que cada archivo o directorio creado bajo el herede el grupo
+			del directorio principal.
+			
+			$ chmod g+s test.sh
+			$ ls -l test.sh
+			-rwxr-sr-x 1 carol root 33 Dec 11 10:36 test.sh
+			
+			$ chmod 2755 test.sh
+			$ ls -l test.sh
+			-rwxr-sr-x 1 carol root 33 Dec 11 10:36 test.sh
+			
+			Para emtenderlo mejor haremos lo siguiente:
+			Supongamos que tenemos un directorio llamado Sample_Directory, propiedad del usuario carol y
+			del grupo users, con la siguiente estructura de permisos:	
+			
+			$ ls -ldh Sample_Directory/
+			drwxr-xr-x 2 carol users 4,0K Jan 18 17:06 Sample_Directory/
+		
+			Ahora, cambiemos a este directorio y, usando el comando touch, creemos un archivo vacío dentro de
+			él. El resultado sería:
+		
+			$ cd Sample_Directory/
+			$ touch newfile
+			$ ls -lh newfile
+			-rw-r--r-- 1 carol carol 0 Jan 18 17:11 newfile
+		
+			el archivo es propiedad del usuario carol y del grupo carol pero si el directorio tuviera el SGID
+			quedaria de la siguiente manera 
+		
+			$ sudo chmod g+s Sample_Directory/
+			$ ls -ldh Sample_Directory/
+			drwxr-sr-x 2 carol users 4,0K Jan 18 17:17 Sample_Directory/
+			
+			$ cd Sample_Directory/
+			$ touch emptyfile
+			$ ls -lh emptyfile
+			-rw-r--r-- 1 carol users 0 Jan 18 17:20 emptyfile	
+			
+			Esto crea el archivo, propiedad de users, esto es porque el permiso SGID hizo que el archivo heredara
+			el propietario del grupo de su directorio principal, que es users.
+		
+		
+######################## SUID ################################# 		
+	Tiene valor 4 y esta representado por una s en los permisos de user en modo simbolico. solo se aplica a archivos
+	los archivos se ejecutan con los privilegios del usuario propietario del archivo.
+		$ ls -ld test.sh
+		-rwsr-xr-x 1 carol carol 33 Dec 11 10:36 test.sh
+		
+	Podemos combinar varios permisos especiales en un parametro. entonces para establecer SGID (2) y SUID (4)
+	en modo octal para el scrip test.sh con permisos 755 :
+	
+		$ chmod 6755 test.sh
+		$ ls -lh test.sh
+		-rwsr-sr-x 1 carol carol 66 Jan 18 17:29 test.sh
+		
+		
+		
+		
+############ 104.6 Crear y cambiar enlaces duros y simbolicos pag 525 ##########################
+comandos:
+
+	#################		enlaces duros 	pag 527	##############################
+	ln
+		ln TARGET LINK_NAME crea un enlace duro llamado LINK_NAME del archivo TARGET.
+			si se omite el LINK_NAME se crea un enlace con el mismo nombre que el objetivo en la ruta actual 
+			$ ln target.txt /home/carol/Documents/hardlink crea un link llamado hardlink en la ruta
+				del archivo target
+		ls -li
+			para ver informacion
+			$ ls -li
+				total 224
+				3806696 -r--r--r-- 2 carol carol 111702 Jun 7 10:13 hardlink
+				3806696 -r--r--r-- 2 carol carol 111702 Jun 7 10:13 target.txt
+				
+		Este tipo de enlaces solo se pueden crear en la misma particion y solo archivos
+		
+	
+		Si se elimina el archivo del enlace simbolico o suave el enlace dejara de funcionar.
+		
+		#################		enlaces suaves 	pag 529	##############################
+		
+		$ ln -s target.txt /home/carol/Documents/softlink crea un enlace suave a target llamado softlink en la ruta
+			$ ls -lh
+			total 112K
+			-rw-r--r-- 1 carol carol 110K Jun 7 10:13 target.txt
+			lrwxrwxrwx 1 carol carol 12 Jun 7 10:14 softlink -> target.txt
+			
+			Tenemos que tener especial atencion a los enlaces y su ubicacion absoluta, ya que si no se especifica
+			la ruta completa y movemos el enlace este dejara de funcionar, ya que si lo creamos sin especificar
+			el archivo se creara con una ruta relativa, para solucionar esto:
+				ln -s /home/carol/Documents/original.txt softlink
+		
+		los enlaces suaves no aumentan el número de enlaces de un
+		archivo.
+		
+		
+		
+		
+############ 104.7 Encontrar archivos de sistema y ubicarlos pag 542 ##########################		
+comandos:
+	find
+	locate: encontrar archivos rapidamente, busca en una base de datos construida con el comando updatedb, puede ser
+			impresiso 
+		locate jpg localizar archivos jpg, no importa lo venga antes o despues si contiene jpg, 
+			patrones no extensiones
+			
+		$ locate -i .jpg no importa minisculas o mañusculas 
+		
+		$ locate -i zip jpg regresa 2 resultados, se separan por espacio los patrones 
+		
+		$ locate -A .jpg .zip para decirle que cumpla con los 2 patrones se utiliza -A
+			/home/carol/Downloads/Pentaro.jpg.zip
+		
+		$ locate -c .jpg para contar los archivos .jpg en todo el sistema 
+		1174
+
+		-e para que verifique que el archivo exista
+		
+	updatedb construñe una base de datos para el comando locate archivo de configuracion /etc/updatedb.conf 
+		PRUNEFS= cualquier tipo de sistema de archivos indicado no sera escaneado, no key-sensitive
+		PRUNENAMES= directorios que no seran escaneados, separados por espacio 
+		PRUNEPATHS= lista de nombres de ruta que deben ser ignorados
+		PRUNE_BIND_MOUNTS= variable simple si o no, yes los montajes de enlace (mount) seran ignorados 
+		
+	whereis mas versatil que type, hace lo de type pero ademas mostrara la ubicacion de las paginas del manual
+		$ whereis locate
+		locate: /usr/bin/locate /usr/share/man/man1/locate.1.gz
+		
+		-b binarios 
+			$ whereis -b locate
+			locate: /usr/bin/locate
+		
+		-m paginas del manual 
+		$ whereis -b locate
+		locate: /usr/bin/locate
+		
+		-s codigo fuente 
+	
+	which buscar la ruta a un comando 
+		-a mostrar todos los nombres de ruta que coincidan con el ejecutable 
+		$ which -a mkfs.ext3
+		/usr/sbin/mkfs.ext3
+		
+	type comando similar que mostrara informacion sobre un binario, incluyendo donde se encuentra y su tipo 
+		$ type locate
+		locate is /usr/bin/locate
+		
+		$ type -a locate mostrara todas las rutas al ejecutable 
+		locate is /usr/bin/locate
+		locate is /bin/locate
+		
+		$ type -t locate mostrara el tipo de archivo del comando (alias keyword, funtion, file o builtin)
+		file
+		
+		$ type -t ll
+		alias
+		
+		$ type -t type
+		type is a built-in shell command
+	
+		
+		
+Estructura basica de directorios es la siguiente:
+	/ :		Raiz del sismeta
+	
+	/bin:	Binarios esenciales, disponibles para todos los usuarios
+	
+	/boot:	archivos necesarios para el proceso de arranque, incluido el disco RAM inicial (initrd) y el kernel
+	
+	/dev:	archivos de dispositivos, fisicos o virtuales 
+	
+	/etc:	archivos de configuracion especificos del host. los programas crean subdirectorios para sus archivos 
+			de configuracion 
+			
+	/home:	cada usuario tiene su home
+	
+	/lib:	bibliotecas compartidas para arrancar el sistema operativo y ejecutar los archivos en /bin /sbin 
+	
+	/media:	medios extraibles montalbes por el usuario, como unidades flash, cd, dvd, usb y discos externos
+	
+	/mnt:	punto de montaje para sistemas de archivos montados temporalmente 
+	
+	/opt:	paquetes de SW de apps
+	
+	/root:	directorio del super usuarios 
+	
+	/run:	datos variables en tiempo de ejecucion 
+	
+	/sbin:	binarios del sistema
+	
+	/srv:	datos servidos por el sistema, por ejemplo paginas ofrecidas por un servidor almacenadas en /srv/www
+	
+	/tmp:	archivos temporales
+	
+	/usr:	datos de usuario de solo lectura, incluido los datos que necesitan algunas apps y utilidades secundarias
+	
+	/proc:	sistemas de archivos virtual que contiene datos relacionados con los procesos de ejecucion
+	
+	/var:	datos variables escritos durante el funcionamiento del sistema, cola de impresion, datos de registro,
+			buzon de correo, archivos temportales, cache del navegador, etc
+	
+	
+	
+Ubicacion de los archivos temporales:
+La version 3.9 del Filesystem Hierarchy Standard (FHS) define ubicaciones estandares para archivos.
+Cada ubicacion tiene un proposito y comportamiento diferente, se recomienda seguir 	las pautas por FHS
+al escribir datos temporales de datos.
+
+	/tmp:	segun la FHS, los programas deben asumir que los archivos escritos aqui se conservaran entre las 
+			invocaciones de un programa 
+	
+	/var/tmp:	otra ubicacion para archivos temporales, pero esta no debe borrarse durante el arranque del sistema
+				Los archivos generados aqui generalmente persistiran entre reinicios
+				
+	/run:		datos variables en  tiempo de ejecucion que utilizan los procesos en ejecucion (pid),
+				programas que necesitan mas de un archivo en tiempo de ejecucion pueden crear subdirectorios aqui
+				
+##### Buscar archivos #######
+find:
+	find . -name '*.jpg' 		todos los archivos que terminen en .jpg 
+	$ find . -name '*.jpg*'		todos los archivos que contengan .jpg 
+	
+	-user USERNAME: archivos propiedad del usuario USERNAME
+	-group GROUP:	archivos propiedad del gurpo GROUP
+	-readable:		archivos qaue son legibles por el usuario actual 
+	-writable:		archivos en los que el usuario actual puede escribir
+	-executable:	archivos ejecutables por el usuario actual, en caso de directorios con permiso +x 
+	-perm NNNN:		archivos con permisos NNNN 
+	-empty:			archivos y directorios vacios
+	-size N:		archivos de tamaño N, (nc en bytes, nk en kilobites, nM mebibytes, nG para gigas)
+	
+	$ find ~ -iname "*report*" -perm 0644 -atime 10 -size +1M
+		buscar archivos en su directorio de inicio que contengan el patrón report sin
+		distinguir entre mayúsculas y minúsculas en cualquier parte del nombre, tengan permisos 0644,
+		hayan sido accedidos hace 10 días y cuyo tamaño sea de al menos 1 Mib
+		
+	## Busqueda por tiempo ##
+	-amin N, -cmin N, -mmin N
+		Coincidira con los archivos a los que se ha accedido, se han cambiado los atributos o se han modificado 
+		-amin N accedidos 
+		-cmin N cambiados 
+		-mmin N modificados 
+		
+	-atime N, -ctime N, -mtime N
+		coincidira con los archivos a los que se accedio, se cambiaron los atributos o se modificaron N*24H atras
+		-atime N accedidos hace n dias 
+		-ctime N cambiados hace n dias
+		-mtime N modificados hace n dias 
+	
+		
+	
+	
+	
+	
+	
+	
+		
+	
+	
+	
+	
+
+
+
+
+	
+
+	

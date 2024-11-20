@@ -1,0 +1,298 @@
+Tema 102: INstalacaión de Linux y gestión de paquetes
+
+
+{ 102.1 Diseño del esque de particionado del disdo duro }
+
+	Áreas de conocimiento clave
+		• Asignar sistemas de archivos y espacio de intercambio a particiones o discos separados.
+		• Adaptar el diseño al uso previsto del sistema.
+		• Asegurar de que la partición /boot cumple los requisitos de la arquitectura de hardware para el arranque.
+		• Conocimiento de las características básicas de LVM.
+		
+		
+	Lista parcial de archivos, términos y utilidades
+		• Sistema de archivos / (raíz)
+		• Sistema de archivos /var
+		• Sistema de archivos /home
+		• Sistema de archivos /boot
+		• Partición del sistema EFI (ESP)
+		• Espacio de intercambio (swap)
+		• Puntos de montaje
+		• Particiones
+		
+		
+	Las Particiones no pueden abarcar varios discos. Pero al usar LVM se pueden combinar varias particiones, incluso através 
+	de discos, para formar un único volumen logico (LV). 
+	
+	[ Puntos de montaje ]
+	
+	Para poder acceder a un sistema de archivo en Linux tiene que estar montado, este punto de montaje se llama (mount point)
+	Para poder montarlo tiene que existir el punto de montaje.
+	Si montaje el punto de montaje en un punto de montaje que no este vacío el contenido no estara desponible hasta desmontarlo
+	
+	Tradicionalmente se montaba en /mnt, /mnt/cdrom, /mnt/floppy, esto a sido reemplazado por /media que es el punto de montaje
+	predefinido para cualquier medio extraíble por el usuario, es una buena practica montarlos en ese directorio.
+	
+	En la mayoría de distribuciones modernas de linux los dispositivos se montan automáticamente en /media/user/label,
+	/media/john/flash, unidad flash conectada por john.
+	
+	Buena practica mantener en particiones separadas algunos directorio por ejemplo:
+	/boot --> por si falla el gestor de arranque 
+	/home --> facilita la reinstalación del sistema sin perder los datos 
+	/var  --> Mantener los datos relacionados con el servidor asaldo
+	/     --> velocidad
+	
+	
+	[ Partición de arranque /boot ]
+		Esta partición de arranque contiene archivos utilziados por el gestor de arranque para cargar el SO.
+		Generalmente suele ser /boot y sus archivos se almacenan en /boot/grub.
+		
+		No es necesario esta particion porque grub puede montar la partción raiz y cargar desde un directorio separado /boot
+		Pero es una buena practica mantenerlo separado por temas de seguridad
+		
+		La primera partición del disco suele ser la partición de arranque 528 MB. Un buen tamaño es de 300 MB alrededor
+		
+	[ Partición del sismeta EFI (ESP) ]
+		La EFI system Partition (ESP) es utilizada por máquinas con UEFI para almacenar cargadores de arranque e imágenes
+		del núcleo del SO instalados.
+		
+		Sistemas de archivos FAT: sistema de archivos usado comúnmente en particiones, SD, SSD, HDD, USB
+		
+		Tabla de particiones GUID (GPT --> UEFI) 
+			
+			Esquema mas moderno para particionar discos duros.
+				Este se identificado con el GUID --> Identificador único global, cada partición tiene un identificador único
+				llamado GUID (Global Unique Identifier).
+				Si el disco esta particionado con GUID el identificador seria algo así: C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+				
+			Esquema de particiones MBR (BIOS)
+				Master Boot Record (MBR) es el esquema más antiguo para particionar discos, teniendo limitaciones.
+				4 particiones primarias y soportar solo 2 TB de tamaño de disco.
+				si el disco esta particionado con MBR seria algo así: 0xEF (hexadecimal)
+				
+	[ Particiones importantes ]
+	
+		/home	----> directorio de inicio de usuario para almacenar información y preferencias
+		
+		/root	----> directorio de inicio del usuario administrador root 
+		
+		/var	----> datos variables o archivos y directorios en los que el sistema debe poder escribir durante la operación.
+						/var/log	-> registros
+						/var/tmp	-> archivos temporales
+						/var/cache	-> datos de aplicaciones en caché
+						Una buena razón para mentener este directorio en una partición separada esque muchas apps y procesos
+						escriben en /var y subdirectorios. como /var/log o /var/tmp, un proceso anormal puede escribir datos
+						hasque que no quede espacio libre en el sistema de archivos, si esto pasa en el directorio raíz 
+						el sistema entraria en un estado de emergencia del núcleo del sistema (Kernel panic) y corrucción 
+						del sistema de archivos, dificil de recuperarse.
+		
+		Swap, la partición de intercambio swap se utiliza para intercambiar páginas de memoria RAM a disco según sea necesario.
+		Un sistema puede tener multiples swap pero es poco comun, para interacutar con ella mkswap, lo veremos en el tema 104
+		
+	[ LVM ]
+	Es una forma de virtualización de almacenamiento que ofrece a los administradores de sisemas un enfoque más flexible.
+	
+	La unidad básica es el Physical Volume (PV) que es el dispositivo de bloque en su sistema (particion HDD o RAID)
+	
+	Los PV se agrupan en Grupos de volúmenes (VG) que abstraen los dispositivos y se ven como un único dispositivo logico.
+		La parte mas pequeña de un PV es un PE (Physical Extents
+	
+	Los VG se pueden subdividir en volúmenes lógicos (LV), qye funcionan de forma similar a las paticiones pero con flexible.
+		Despues de crear un LV el sistema lo reconoce como un dispotivo de bloque normal, nombrado /dev/VGNAME/LVNAME
+		
+
+{ 102.2 Instalar un gestor de arranque }
+
+	Áreas de conocimiento clave
+		• Proporcionar ubicaciones alternativas para el gestor de arranque así como opciones de arranque de respaldo.
+		• Instalar y configurar un gestor de arranque como GRUB Legacy.
+		• Realizar cambios básicos de configuración para GRUB 2.
+		• Interactuar con el gestor de arranque.
+
+	Lista parcial de archivos, términos y utilidades
+		• menu.lst, grub.cfg y grub.conf
+		• grub-install
+		• grub-mkconfig
+		• MBR
+		
+		
+	Gestor de arranque predeterminado en la mayoria de distros linux es GRUB 2, más flexible, sentencias condicionales, diseño
+	más modular y una mejor localización/internalización.
+	
+	¿Donde se encuentra el cargador de arranque?
+		
+		HDD compatibles con IBM se particionarón con MBR 
+		
+		MBR ---> 	El primer sector de 512 bytes del disco se llama Master Boot Record y contiene la tabla que describe las 
+					las particiones en el disco (tabla de particiones ) y también el código de arranque, 
+					llamado cargador de arranque
+					
+					Encendido del pc
+					
+					se carga el código de gestor de arranque mínimo
+					
+					gestor de arranque mínimo pasa el control a un cargador de arranque secundario en el disco entre los 32 KB y
+					la primera particion que cargara el SO
+					
+		En un disco con Particiones MBR, el código de arranque para GRUB está instalado en el MBR, esto carga y pasa el controla
+		a una imagen "núcleo" instalada entre el MBR y la primera partición, desde este punto GRUB es capaz de cargar el resto
+		de los recursos necesarios
+		
+		Limitaciones de MBR:
+			limite de particiones: 
+				originalmente un maxímo de 4 primarias
+				
+				Luego un máximo de 3 particiones primarias con 1 partición extendida subdividida en un número de particiones 
+				lógicas	y tamaño maximo de 2 TB 
+				
+				Luego de superar estas limitaciones se desarolla GPT estandar para UEFI.
+				
+				GPT puede usar BIOS o UEFI 
+				
+		[ Partición /boot ]
+		
+			En esta particion se guardan los archivos necesarios para el proceso de arranque
+			El contenido de la particion puede variar pero en un sistema basado en x86, generalmente encontrará los 
+			siguientes archivos:
+								
+			Archivos de configuración
+				Almacenan los parámetros de configuración para el núcleo de linux, se generan automáticamente al compilar
+				
+				- config-4.15.0-65-generic que es la configuración para el núcleo del kernel : 4.15.0-65-generic
+			
+			Mapa del sistema 
+				Tabla de búsqueda que combina nombres de símbolos con su posición correspondiente en la memoria,
+				Util cuando el sistema entra en kernel panic ya que permite saber que variable o función estaba en ese momento
+				
+				El nombre suele ser System.map-VERSION
+					ejemplo System.map-4.15.0-65-generic
+			
+			Kernel de linux
+				Núcle del sistema propiamente dicho, el nombre suele ser vmlinux-VERSION (vmlinuz-6.8.0-44-generic), tambien
+				se puede encontrar con una z al final esto indica que el archivo esta comprimido.
+				
+			Disco RAM inicial
+				Esto generalmente se llama initrd-img-version (initrd.img-6.8.0-44-generic) y contiene un sistema de 
+				archivos raíz mínimo cargado en un disco RAM, contiene utilidades y módulos del núcleo necesarios para que 
+				el núcleo pueda montar el sistema de archivos raíz real
+				
+			Archivos relasionados con el cargador de arranque
+				En los sistemas con grub instalado, estos generalmente se encuentran en /boot/grub que incluyen el archivo
+				de conf de grub (/boot/grub/grub.cfg) --> para grub 2 
+								(/boot/grub/menu.lst) --> de grub legacy.
+				
+				Modulos en /boot/grub/i386-pc 
+				
+				Archivos de traducción en /boot/grub/font
+				
+			[ Instalación de grub 2 ]
+			
+			Para instalarlo se utiliza grub-install, si el ordenador no arranca lo haremos atraves de un live usb/cd
+			
+			Pasos para instalar grub 2:
+				comprobar la partición boot: fdisk -l /dev/sda --> normalmente en sda esta la partición
+				
+				Crear un directorio y montar ahí la partición:
+					mkdir /mnt/tmp
+					mount /dev/sda1 /mnt/tmp
+				
+				Luego ejecutamos grub-install, apuntándo al dispositivo de arranque (no a la partición) y el directorio montado
+				Si nuestro sistema tiene una partición de arranque dedicada el comando es el siguiente:
+					- grub-install --boot-directory=/mnt/tmp /dev/sda 
+					
+				Si está instalado en un sistema que no tiene particion de arranque, sino solo un directorio /boot utilizamos:
+					- grub-install --boot-directory=/boot /dev/sda
+					
+			[ Configuración de grub 2 ]
+				Archivo de configuración --> /boot/grub/grub.cfg 
+				Este archivo no se recomienda editar manualmente, En caso de querer editar GRUB debemos editar el archivo
+				que se encuentra en /etc/default/grub y luego ejecutar la utilidad update-grub para generar un archivo compatibles
+				
+				update-grub suele ser un acceso directo a grub-mkconfig -o /boot/grub/grub.cfg se producen los mismos cambios
+				
+				
+				Hay algunas opciones en el archivo de conf que controlan el comportamiento de grub, como el kernel predeterminado
+				tiempo de espera, los parámetros de la línea de comandos, etc, los mas importantes son:
+				
+				--> GRUB_DEFAULT=
+					Entrada del menú de arranque que seleccionará por defecto GRUB, es decir que sistema o kernel cargará grub 
+					si no se hace ninguna otra selección manual en el menú de arranque.
+					
+					Este valor puede configurarse de tres formas distintas: un valor numérico. el nombre de una entrada o el 
+					valor especial saved.
+					
+				--> GRUB_SAVEDEFAULT=
+					Habilita la función de guardar la última entrada seleccionada en GRUB.
+					GRUB_DEFAULT debera estar con la opción saved
+					
+				--> GRUB_TIMEOUT=
+					Tiempo de espera en segundos, antes que se seleccione la entrada de menú predeterminada.
+					Si es 0 el sistema iniciara la entrada predeterminada sin mostrar un menú
+					Si es -1 el sistema esperará que el usuario seleccione una opción sin importar el tiempo de espera
+					
+				--> GRUB_CMDLINE_LINUX=
+					Pasa parámetros al kernel de linux cuando el sistema se inicia, por ejemplo:
+					
+					GRUB_CMDLINE_LINUX="nomodeset"
+						No carga los controladores graficos
+						
+					GRUB_CMDLINE_LINUX="quiet"
+						Reduce la información mostrada en pantalla durante el arranque 
+						
+					GRUB_CMDLINE_LINUX="splash"
+						fondo o splash durante el arranque 
+					
+				--> GRUB_CMDLINE_LINUX_DEFAULT=
+						Pasa parametros cuando se selecciona solo entradas normales en el menu de grub, no se aplica 
+						cuando se selecciona una entrada de recuperación
+						
+							GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+				
+				--> GRUB_ENABLE_CRYPTODISK=
+						Si se establece en y, los comandos grub-mkconfig, update-grub y grub-install buscarán discos cifrados
+						y agregarán los comandos necesarios para acceder a ellos durante el arranque. Esto desactiva el arranque
+						automatico (GRUB_TIMEOUT) porque se necesita una contraseña para descifrar los discos y acceder a ellos.
+
+
+				
+			[ Administrar entradas de menú ]
+				Cuando se ejecuta update-grub, grub 2 buscará núcleos y SO en la máquina y generará la configuración 
+				correspondiente en el archivo /boot/grub/grub.cfg, se puede agregar nuevas entradas manualmente a los 
+				archivos scrip dentro del directorio /etc/grub.datos
+				
+				Estos archivos son procesados/ejecutados en orden numérico por update-grub. Las entradas de menú personalizadas
+				generalmente se agregan al archivo 40_custom.
+				
+				Ejemplo de sintaxis básica :
+				
+					menuentry "Default OS" {
+						set root=(hd0,1)
+						linux /vmlinuz root=/dev/sda1 ro quiet splash
+						initrd /initrd.img
+					}
+					
+					set root = define el disco y la partición donde se encuentra el sistema de archivos raíz para el SO
+					linux = indica donde se encuentra el núcleo del SO
+					initrd = indica donde se encuentra el disco RAM inicial
+					
+					blkid
+					ls -l /dev/disk/by-uuid/
+					Estos comandos sirven para saber el uuide de una partición 
+					
+			[ Interactuando con GRUB 2 ] pag 76
+				
+					
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				

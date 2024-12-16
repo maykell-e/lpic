@@ -527,6 +527,48 @@ Tema 102: INstalacaión de Linux y gestión de paquetes
 		• /etc/yum.repos.d/
 		• yum
 		• zypper
+		
+	[ Gestor de paquetes RPM ]
+	
+		rpm
+			-i --> instalar un paquete
+			-U --> Actualizar un paquete a la ultima versión
+			-F --> Solo actualiza el paquete si ya esta instalado
+			-e --> elimina un paquete instalado en el sistema
+			-qa --> lista todos los paquetes instalados
+			-qi --> información sobre un paquete instalado
+			-ql --> lista los archivos dentro de un paquete instalado
+			-qip --> información de un paquete que no se a instalado
+			-qf --> qué archivo posee un paquete instalado
+			
+			
+	[ YellowDog Updater Modificado (yum) ]
+		yum
+			-search --> busca paquetes
+			-install
+			-update
+			-check-update --> ver si hay actulización para ese paquete
+			-whatprovides [paquete] --> que paquete proporciona un archivo
+			-info 
+			
+			
+	[ Gestion de repositios de SW ]
+	
+		las repos se enumeran en el directorio /etc/yum.repos.d/
+		En esta ruta podemos agregar nuevos repositorios pero la forma recomendada es con la herramienta yum-config-manager
+		
+		Para agregar un repositorio se usa el parametro --add-repo URL arhivo.repo.
+		# yum-config-manager --add-repo https://rpms.remirepo.net/enterprise/remi.repo
+		Loaded plugins: fastestmirror, langpacks
+		adding repo from: https://rpms.remirepo.net/enterprise/remi.repo
+		grabbing file https://rpms.remirepo.net/enterprise/remi.repo to
+		/etc/yum.repos.d/remi.repo
+		repo saved to /etc/yum.repos.d/remi.repo
+		
+		Obtener una lista de todos los repositorios disponibles:
+			yum repolist all
+			
+		
 
 		
 					

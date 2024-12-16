@@ -510,9 +510,26 @@ Tema 102: INstalacaión de Linux y gestión de paquetes
 			archivo principal source.list, estos siguen el mismo patron de antes y la extensión .list
 			
 			 
-			Pag 126
-			
-			-
+{102.5 Gestión de paquetes RPM y YUM Redhat}
+
+	Áreas de cono clave: 
+		• Instalar, reinstalar, actualizar y desinstalar paquetes usando RPM, YUM y Zypper.
+		• Obtener información de paquetes RPM como la versión, estado, dependencias, integridad y
+		firmas.
+		• Determinar qué archivos proporciona un paquete así como encontrar de qué paquete
+		proviene un determinado archivo.
+		• Conocimientos de dnf.
+
+	Lista parcial de archivos, términos y utilidades
+		• rpm
+		• rpm2cpio
+		• /etc/yum.conf
+		• /etc/yum.repos.d/
+		• yum
+		• zypper
+
+		
+					
 				
 				
 				

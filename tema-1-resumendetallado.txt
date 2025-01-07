@@ -310,7 +310,7 @@ Resumen libro lpic 101-500
 			{ Cargador de arranque } pag 26
 			
 				Init es el primer programa ejecutado, este se encarga de ejecutar todos los scripts de inicialización y demonios del sistema.
-				Existen implementaciones distintas de estoos iniciadores de sistemas aparte del init tradicional, como systemd y upstart.
+				Existen implementaciones distintas de estos iniciadores de sistemas aparte del init tradicional, como systemd y upstart.
 				
 				{ SysV standard }
 					Administrador de servicios basado en el estándar SysVinit, controla que demonios y recursos estarán disponibles mediante
@@ -338,7 +338,7 @@ Resumen libro lpic 101-500
 				[ 5.449712] ip_tables: (C) 2000-2006 Netfilter Core Team
 				[ 5.460286] systemd[1]: systemd 237 running in system mode.
 				
-				la salida del comando puede contener nietnos de líneas
+				la salida del comando puede contener cientos de líneas
 				
 				En los sistemas basados en systemd, el comando journalctl mostrará los mensajes con las opciones -b, --boot, -k o --dmesg.
 				
@@ -432,9 +432,9 @@ Resumen libro lpic 101-500
 						process: comando o proceso a ejecutar en el runlevel indicado
 						
 				Las acciones disponibles son:
-					-boot: Se ejecutará durante la iniciañización del sistema, runlevel se ignora
+					-boot: Se ejecutará durante la inicialización del sistema, runlevel se ignora
 					-bootwait: se ejecuta durante el inicio del sistema e init espera que termine para continuar, runlevel ignora
-					-sysinit: proceso se ejecutará despueés de la inicialización del sistema, independiente del runvelel, se ignora
+					-sysinit: proceso se ejecutará después de la inicialización del sistema, independiente del runvelel, se ignora
 					-wait: se ejecutará en los niveles dados e init esperará hasta que termine
 					respawn: el proceso se reiniciara sin finalización
 					ctrlaltdel: proceso se ejecuta con la ' ctrl + alt + supr', esto lo recibira init e inicia el proceso 

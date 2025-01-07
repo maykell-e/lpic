@@ -568,8 +568,76 @@ Tema 102: INstalacaión de Linux y gestión de paquetes
 		Obtener una lista de todos los repositorios disponibles:
 			yum repolist all
 			
+		Los repositorios disabled serán ignorados al instalar o actualizar  el SW. para deshabilitar un repositorio
+		use:
+		yum-config-manager --dissable updates --> esto deshabilita el repositorio de updates
+		yum-config-manager --enable updates
 		
+		Yum almacena los paquetes descargadosy los metadatos asociados en un directorio de caché (/var/cache/yum) generalmente
+		Para limpiar la cache: 					-> yum clean packages
+		Para limpiar descarcados y metadatos: 	-> yum clean metadata
 
+	[ DNF ]
+		
+		dnf es la herramienta de administración de paquetes utilziada en fedora, bifurcación de yum.
+		muchos comandos y parámetros son similares
+		
+		dnf:
+			search  --> busca el patron y muestra los paquetes asociados 
+			info 	-->	Información del paquete
+			install --> instala el paquete
+			remove 	--> Elimina el paquete
+			upgrade --> actualizar paquete
+			provides --> que paquete proporciona el paquete
+			list --installed
+			repoquery -l paquete --> listado de paquetes instalados en el sistema
+			
+			repolist --> lista los repositorios disponibles 
+				--enabled --> lista activos
+				--disabled --> lista desactivados
+				
+			config-manager --add-repo URL --> añadir el repositorio
+			config-manager --set-disabled REPOID --> desactiva el repositorio 
+			
+		Los repositorios se almacenan en archivos .repo en el directorio /etc/yum.repos.d/
+		
+	[ zypper ]
+		Herramienta de paquetes de SUSE linux y OpenSuse
+		similar a apt y yum, instalar, actualizar y eliminar paquetes con resolución de dependencias
+		
+		zypper:
+			refresh --> actualizar el indice de paquetes
+			
+			se 		--> buscar un paquete
+				-i 	--> instalados 
+				--provides /usr/lib64/libgimpmodule-2.0.so.0 --> que contiene el archivo 
+			
+			in 		--> instalar
+			
+			update
+				list-update
+			
+			rm 		--> eliminar un paquete
+			
+			i
+			
+			nfo
+			
+			repos --> repositorios actualmente registrados en el sistema
+			
+			modifyrepo -d repo-non-oss --> desactiva el repositorio
+			modifyrepo -e repo-non-oss --> habilita el repositorio
+			
+			modifyrepo -F repo-non-oss --> actualización automatica desactivada
+			modifyrepo -f repo-non-oss --> actualización automatica activada
+			
+			addrepo http://packman.inode.at/suse/openSUSE_Leap_15.1/ packman --> agregar el repositorio con el nombre
+			removerepo packman --> eliminar el repositorio
+			
+			
+			
+{102.6 Linux como sistema virtualizado}				
+		
 		
 					
 				
